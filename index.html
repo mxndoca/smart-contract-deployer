@@ -619,9 +619,17 @@
                                 <input type="text" id="preconfig-link-input" class="form-control" readonly style="font-size: 0.8rem; padding: 0.5rem; background: rgba(0, 0, 0, 0.3);">
                                 <button id="copy-preconfig-btn" class="btn" style="padding: 0.5rem 1rem; font-size: 0.8rem; white-space: nowrap;">Copiar</button>
                             </div>
+                            
+                            <!-- Wallet QR Selector Tabs -->
+                            <div style="display: flex; gap: 0.3rem; margin-bottom: 0.8rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 0.2rem; border-radius: 8px;">
+                                <button type="button" id="preconfig-qr-tab-trust" class="btn active" style="flex: 1; padding: 0.3rem; font-size: 0.75rem; justify-content: center; background: rgba(255,255,255,0.08); border: none; box-shadow: none; color: white;">Trust Wallet</button>
+                                <button type="button" id="preconfig-qr-tab-metamask" class="btn" style="flex: 1; padding: 0.3rem; font-size: 0.75rem; justify-content: center; background: transparent; border: none; box-shadow: none; color: var(--text-secondary);">MetaMask</button>
+                                <button type="button" id="preconfig-qr-tab-direct" class="btn" style="flex: 1; padding: 0.3rem; font-size: 0.75rem; justify-content: center; background: transparent; border: none; box-shadow: none; color: var(--text-secondary);">Navegador</button>
+                            </div>
+
                             <div style="text-align: center;">
                                 <img id="preconfig-qr-image" src="" alt="QR de Preconfiguración" style="border: 6px solid #ffffff; border-radius: 8px; width: 140px; height: 140px; display: inline-block;">
-                                <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.3rem;">Escanea este QR para cargar estos parámetros en tu móvil y desplegar</p>
+                                <p id="preconfig-qr-text" style="font-size: 0.72rem; color: var(--text-secondary); margin-top: 0.3rem;">Escanea este QR para cargar estos parámetros en tu móvil y desplegar</p>
                             </div>
                         </div>
                     </div>
@@ -656,9 +664,17 @@
                             <input type="text" id="share-link-input" class="form-control" readonly style="font-size: 0.8rem; padding: 0.5rem; background: rgba(0, 0, 0, 0.3);">
                             <button id="copy-share-btn" class="btn" style="padding: 0.5rem 1rem; font-size: 0.8rem; white-space: nowrap;">Copiar Link</button>
                         </div>
+                        
+                        <!-- Wallet QR Selector Tabs -->
+                        <div style="display: flex; gap: 0.3rem; margin-bottom: 0.8rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 0.2rem; border-radius: 8px;">
+                            <button type="button" id="share-qr-tab-trust" class="btn active" style="flex: 1; padding: 0.3rem; font-size: 0.75rem; justify-content: center; background: rgba(255,255,255,0.08); border: none; box-shadow: none; color: white;">Trust Wallet</button>
+                            <button type="button" id="share-qr-tab-metamask" class="btn" style="flex: 1; padding: 0.3rem; font-size: 0.75rem; justify-content: center; background: transparent; border: none; box-shadow: none; color: var(--text-secondary);">MetaMask</button>
+                            <button type="button" id="share-qr-tab-direct" class="btn" style="flex: 1; padding: 0.3rem; font-size: 0.75rem; justify-content: center; background: transparent; border: none; box-shadow: none; color: var(--text-secondary);">Navegador</button>
+                        </div>
+
                         <div style="text-align: center; margin-top: 0.5rem;">
                             <img id="share-qr-image" src="" alt="Código QR para móvil" style="border: 6px solid #ffffff; border-radius: 8px; width: 140px; height: 140px; display: inline-block;">
-                            <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.3rem;">Escanea este QR con tu móvil para interactuar</p>
+                            <p id="share-qr-text" style="font-size: 0.72rem; color: var(--text-secondary); margin-top: 0.3rem;">Escanea este QR con tu móvil para interactuar</p>
                         </div>
                     </div>
                 </div>
@@ -745,6 +761,12 @@
         let deployedContractAddress = "";
         let contractInstance = null;
 
+        // Sharing URL states
+        let preconfigUrl = "";
+        let deployedContractUrl = "";
+        let currentPreconfigMode = "trust";
+        let currentShareMode = "trust";
+
         // Initialize UI Elements
         document.addEventListener("DOMContentLoaded", () => {
             setupContractMetadata();
@@ -795,6 +817,15 @@
             // Asset dashboard action listeners
             document.getElementById("add-custom-token-btn").addEventListener("click", addCustomToken);
             document.getElementById("transfer-action-btn").addEventListener("click", executeTransfer);
+
+            // QR Tab Listeners
+            document.getElementById("preconfig-qr-tab-trust").addEventListener("click", () => updatePreconfigQR("trust"));
+            document.getElementById("preconfig-qr-tab-metamask").addEventListener("click", () => updatePreconfigQR("metamask"));
+            document.getElementById("preconfig-qr-tab-direct").addEventListener("click", () => updatePreconfigQR("direct"));
+
+            document.getElementById("share-qr-tab-trust").addEventListener("click", () => updateShareQR("trust"));
+            document.getElementById("share-qr-tab-metamask").addEventListener("click", () => updateShareQR("metamask"));
+            document.getElementById("share-qr-tab-direct").addEventListener("click", () => updateShareQR("direct"));
         });
 
         function showTermsModal() {
@@ -836,11 +867,13 @@
                 return;
             }
 
-            const shareUrl = window.location.origin + window.location.pathname + "?" + params.toString();
+            preconfigUrl = window.location.origin + window.location.pathname + "?" + params.toString();
             
-            document.getElementById("preconfig-link-input").value = shareUrl;
-            document.getElementById("preconfig-qr-image").src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(shareUrl)}`;
+            document.getElementById("preconfig-link-input").value = preconfigUrl;
             document.getElementById("preconfig-share-area").classList.remove("hidden");
+            
+            // Set Trust Wallet as default active QR
+            updatePreconfigQR("trust");
             
             logConsole("Enlace de pre-configuración y QR generados.", "info");
         }
@@ -1128,7 +1161,10 @@
                 logConsole(`¡Contrato desplegado con éxito en: ${deployedContractAddress}!`, "success");
                 
                 showDeploymentSuccess(deployedContractAddress);
-                setupInteractiveDashboard();
+                
+                // Reload balances to show the newly deployed token in the asset list!
+                const chainIdVal = Number((await provider.getNetwork()).chainId);
+                await loadBalances(chainIdVal);
 
             } catch (error) {
                 console.error(error);
@@ -1158,6 +1194,7 @@
 
         // Show Deployment Success UI
         function showDeploymentSuccess(address) {
+            deployedContractAddress = address;
             const successCard = document.getElementById("deployment-success-card");
             successCard.style.display = "block";
             
@@ -1173,9 +1210,11 @@
             link.href = baseUrl + address;
 
             // Generate share link and QR code
-            const shareUrl = window.location.origin + window.location.pathname + "?contract=" + address;
-            document.getElementById("share-link-input").value = shareUrl;
-            document.getElementById("share-qr-image").src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(shareUrl)}`;
+            deployedContractUrl = window.location.origin + window.location.pathname + "?contract=" + address;
+            document.getElementById("share-link-input").value = deployedContractUrl;
+            
+            // Set Trust Wallet as default active QR
+            updateShareQR("trust");
         }
 
         // Multi-Token Asset Dashboard & Wallet Manager script logic
@@ -1461,6 +1500,78 @@
                 actionBtn.disabled = false;
                 actionBtn.innerText = originalText;
             }
+        }
+
+        // QR Mode Update Helpers
+        function updatePreconfigQR(mode) {
+            currentPreconfigMode = mode;
+            if (!preconfigUrl) return;
+
+            // Highlight active button
+            const btnTrust = document.getElementById("preconfig-qr-tab-trust");
+            const btnMeta = document.getElementById("preconfig-qr-tab-metamask");
+            const btnDirect = document.getElementById("preconfig-qr-tab-direct");
+            const textDesc = document.getElementById("preconfig-qr-text");
+            const qrImg = document.getElementById("preconfig-qr-image");
+
+            [btnTrust, btnMeta, btnDirect].forEach(btn => {
+                btn.style.color = "var(--text-secondary)";
+                btn.style.background = "transparent";
+            });
+
+            let finalUrl = preconfigUrl;
+            if (mode === "trust") {
+                btnTrust.style.color = "white";
+                btnTrust.style.background = "rgba(255,255,255,0.08)";
+                textDesc.innerHTML = "Escanea este QR con la **cámara de tu celular** para abrir directamente en **Trust Wallet**";
+                finalUrl = `https://link.trustwallet.com/open_url?coin_id=60&url=${encodeURIComponent(preconfigUrl)}`;
+            } else if (mode === "metamask") {
+                btnMeta.style.color = "white";
+                btnMeta.style.background = "rgba(255,255,255,0.08)";
+                textDesc.innerHTML = "Escanea este QR con la **cámara de tu celular** para abrir directamente en **MetaMask**";
+                finalUrl = `https://metamask.app.link/dapp/${preconfigUrl.replace(/^https?:\/\//, "")}`;
+            } else {
+                btnDirect.style.color = "white";
+                btnDirect.style.background = "rgba(255,255,255,0.08)";
+                textDesc.innerHTML = "Escanea este QR con la **cámara de tu celular** para abrir en tu **navegador web normal**";
+            }
+
+            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(finalUrl)}`;
+        }
+
+        function updateShareQR(mode) {
+            currentShareMode = mode;
+            if (!deployedContractUrl) return;
+
+            const btnTrust = document.getElementById("share-qr-tab-trust");
+            const btnMeta = document.getElementById("share-qr-tab-metamask");
+            const btnDirect = document.getElementById("share-qr-tab-direct");
+            const textDesc = document.getElementById("share-qr-text");
+            const qrImg = document.getElementById("share-qr-image");
+
+            [btnTrust, btnMeta, btnDirect].forEach(btn => {
+                btn.style.color = "var(--text-secondary)";
+                btn.style.background = "transparent";
+            });
+
+            let finalUrl = deployedContractUrl;
+            if (mode === "trust") {
+                btnTrust.style.color = "white";
+                btnTrust.style.background = "rgba(255,255,255,0.08)";
+                textDesc.innerHTML = "Escanea este QR con la **cámara de tu celular** para abrir directamente en **Trust Wallet**";
+                finalUrl = `https://link.trustwallet.com/open_url?coin_id=60&url=${encodeURIComponent(deployedContractUrl)}`;
+            } else if (mode === "metamask") {
+                btnMeta.style.color = "white";
+                btnMeta.style.background = "rgba(255,255,255,0.08)";
+                textDesc.innerHTML = "Escanea este QR con la **cámara de tu celular** para abrir directamente en **MetaMask**";
+                finalUrl = `https://metamask.app.link/dapp/${deployedContractUrl.replace(/^https?:\/\//, "")}`;
+            } else {
+                btnDirect.style.color = "white";
+                btnDirect.style.background = "rgba(255,255,255,0.08)";
+                textDesc.innerHTML = "Escanea este QR con la **cámara de tu celular** para abrir en tu **navegador web normal**";
+            }
+
+            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(finalUrl)}`;
         }
     </script>
 </body>
