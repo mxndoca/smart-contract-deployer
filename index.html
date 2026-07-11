@@ -548,6 +548,43 @@
         </div>
     </div>
 
+    <!-- CLIENT PAYMENT PORTAL -->
+    <div id="client-portal" class="hidden" style="max-width: 480px; width: 100%; margin: 4rem auto; padding: 1rem;">
+        <div class="glass-panel" style="border-color: var(--accent-purple); margin-bottom: 0;">
+            <div style="text-align: center; margin-bottom: 1.5rem;">
+                <span style="font-size: 2.5rem;">💳</span>
+                <h2 style="font-size: 1.4rem; color: white; margin-top: 0.5rem; font-family: 'Space Grotesk', sans-serif; font-weight: 600;">Solicitud de Pago Blockchain</h2>
+                <p id="client-session-id" style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.2rem;">Sesión: #---</p>
+            </div>
+            
+            <div style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.2rem; margin-bottom: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.8rem; margin-bottom: 0.8rem; align-items: center;">
+                    <span style="color: var(--text-secondary); font-size: 0.85rem;">Monto a Transferir:</span>
+                    <span id="client-amount-display" style="color: var(--accent-color); font-weight: 700; font-family: 'Space Grotesk', sans-serif; font-size: 1.25rem;">0.00 USDT</span>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 0.3rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.8rem; margin-bottom: 0.8rem;">
+                    <span style="color: var(--text-secondary); font-size: 0.85rem;">Destinatario:</span>
+                    <span id="client-recipient-display" style="color: white; font-family: monospace; font-size: 0.8rem; word-break: break-all;">0x...</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: var(--text-secondary); font-size: 0.85rem;">Red Requerida:</span>
+                    <span id="client-network-display" style="color: var(--accent-purple); font-weight: 600; font-size: 0.85rem;">Polygon</span>
+                </div>
+            </div>
+
+            <!-- Client Connection state -->
+            <div id="client-connection-status" style="text-align: center; margin-bottom: 1.5rem; color: var(--text-secondary); font-size: 0.85rem; padding: 0.5rem; background: rgba(255,255,255,0.02); border-radius: 8px;">
+                🔴 Billetera No Conectada
+            </div>
+
+            <button id="client-transfer-btn" class="btn btn-purple" style="width: 100%; justify-content: center; padding: 0.8rem; font-size: 1rem; font-weight: 600;">
+                Conectar Billetera y Pagar
+            </button>
+
+            <div id="client-receipt-box" class="result-box hidden mt-3"></div>
+        </div>
+    </div>
+
     <div class="container">
         <!-- HEADER -->
         <header>
@@ -636,6 +673,59 @@
 
                     <div id="console-output" class="console-log hidden">
                         <!-- Deployment logging console -->
+                    </div>
+                </div>
+
+                <!-- Session Generator Card -->
+                <div class="glass-panel">
+                    <h2 class="panel-title"><span>04</span> Generar Enlace de Pago / Sesión</h2>
+                    <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1rem;">
+                        Crea enlaces y códigos QR personalizados para que tus clientes paguen directamente abriendo su billetera.
+                    </p>
+                    
+                    <div class="form-group">
+                        <label>Moneda / Token</label>
+                        <select id="session-asset-select" class="form-control" style="font-size: 0.85rem; background: rgba(0,0,0,0.3); color: white; padding: 0.5rem; border-radius: 6px;">
+                            <!-- Will be loaded dynamically with loaded assets -->
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="session-to-input">Billetera de Destino (Recibe Fondos)</label>
+                        <input type="text" id="session-to-input" class="form-control" placeholder="0x..." style="font-size: 0.85rem;">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="session-amount-input">Monto a Solicitar</label>
+                        <input type="number" id="session-amount-input" class="form-control" placeholder="0.0" step="any" style="font-size: 0.85rem;">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="session-id-input">ID de Sesión / Referencia (Opcional)</label>
+                        <input type="text" id="session-id-input" class="form-control" placeholder="Ej. Factura-101" style="font-size: 0.85rem;">
+                    </div>
+
+                    <button id="gen-session-btn" class="btn btn-purple" style="width: 100%; justify-content: center; margin-top: 1rem;">
+                        Generar QR / Enlace de Sesión
+                    </button>
+
+                    <div id="session-share-area" class="hidden" style="margin-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1rem;">
+                        <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+                            <input type="text" id="session-link-input" class="form-control" readonly style="font-size: 0.8rem; padding: 0.5rem; background: rgba(0, 0, 0, 0.3);">
+                            <button id="copy-session-btn" class="btn" style="padding: 0.5rem 1rem; font-size: 0.8rem; white-space: nowrap;">Copiar</button>
+                        </div>
+                        
+                        <!-- Wallet QR Selector Tabs -->
+                        <div style="display: flex; gap: 0.3rem; margin-bottom: 0.8rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 0.2rem; border-radius: 8px;">
+                            <button type="button" id="session-qr-tab-trust" class="btn active" style="flex: 1; padding: 0.3rem; font-size: 0.75rem; justify-content: center; background: rgba(255,255,255,0.08); border: none; box-shadow: none; color: white;">Trust Wallet</button>
+                            <button type="button" id="session-qr-tab-metamask" class="btn" style="flex: 1; padding: 0.3rem; font-size: 0.75rem; justify-content: center; background: transparent; border: none; box-shadow: none; color: var(--text-secondary);">MetaMask</button>
+                            <button type="button" id="session-qr-tab-direct" class="btn" style="flex: 1; padding: 0.3rem; font-size: 0.75rem; justify-content: center; background: transparent; border: none; box-shadow: none; color: var(--text-secondary);">Navegador</button>
+                        </div>
+
+                        <div style="text-align: center;">
+                            <img id="session-qr-image" src="" alt="QR de Sesión" style="border: 6px solid #ffffff; border-radius: 8px; width: 140px; height: 140px; display: inline-block;">
+                            <p id="session-qr-text" style="font-size: 0.72rem; color: var(--text-secondary); margin-top: 0.3rem;">Escanea este QR con tu billetera para abrir la sesión</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -767,21 +857,36 @@
         let currentPreconfigMode = "trust";
         let currentShareMode = "trust";
 
+        // Global session state
+        window.isClientSession = false;
+        let sessionUrl = "";
+        let currentSessionMode = "trust";
+
         // Initialize UI Elements
         document.addEventListener("DOMContentLoaded", () => {
             setupContractMetadata();
             setupWalletListeners();
             setupConstructorForm();
 
-            // Check for contract parameter in URL
+            // Check for client session parameters
             const urlParams = new URLSearchParams(window.location.search);
-            const contractParam = urlParams.get('contract');
-            if (contractParam && ethers.isAddress(contractParam)) {
-                // Pre-fill existing address input
-                // Note: The input doesn't exist anymore in this version as we load directly, but let's keep the parameter handling.
-                window.autoLoadAddress = contractParam;
-                // Show Terms Modal!
+            const toParam = urlParams.get('to');
+            const amountParam = urlParams.get('amount');
+            
+            if (toParam && amountParam) {
+                // Client Session Mode
+                window.isClientSession = true;
+                document.querySelector(".container").classList.add("hidden");
+                document.getElementById("client-portal").classList.remove("hidden");
+                setupClientSessionUI(urlParams);
                 showTermsModal();
+            } else {
+                // Admin Dashboard Mode
+                const contractParam = urlParams.get('contract');
+                if (contractParam && ethers.isAddress(contractParam)) {
+                    window.autoLoadAddress = contractParam;
+                    showTermsModal();
+                }
             }
 
             document.getElementById("connect-wallet-btn").addEventListener("click", connectWallet);
@@ -826,6 +931,16 @@
             document.getElementById("share-qr-tab-trust").addEventListener("click", () => updateShareQR("trust"));
             document.getElementById("share-qr-tab-metamask").addEventListener("click", () => updateShareQR("metamask"));
             document.getElementById("share-qr-tab-direct").addEventListener("click", () => updateShareQR("direct"));
+
+            // Session Generator Action Listeners
+            document.getElementById("gen-session-btn").addEventListener("click", generateBillingSession);
+            document.getElementById("copy-session-btn").addEventListener("click", copySessionLink);
+            document.getElementById("session-qr-tab-trust").addEventListener("click", () => updateSessionQR("trust"));
+            document.getElementById("session-qr-tab-metamask").addEventListener("click", () => updateSessionQR("metamask"));
+            document.getElementById("session-qr-tab-direct").addEventListener("click", () => updateSessionQR("direct"));
+
+            // Client Portal Action Listener
+            document.getElementById("client-transfer-btn").addEventListener("click", handleClientButtonClick);
         });
 
         function showTermsModal() {
@@ -989,20 +1104,20 @@
         async function handleNewAccounts(accounts) {
             walletAddress = accounts[0];
             const network = await provider.getNetwork();
+            const chainId = Number(network.chainId);
             
             // Format Network Name nicely
             networkName = network.name;
             if (networkName === "unknown" || !networkName) {
-                const chainId = network.chainId;
-                if (chainId === 11155111n) networkName = "sepolia";
-                else if (chainId === 1n) networkName = "mainnet";
-                else if (chainId === 137n) networkName = "polygon";
-                else if (chainId === 80002n) networkName = "amoy";
-                else if (chainId === 31337n) networkName = "hardhat/anvil";
+                if (chainId === 11155111) networkName = "sepolia";
+                else if (chainId === 1) networkName = "mainnet";
+                else if (chainId === 137) networkName = "polygon";
+                else if (chainId === 80002) networkName = "amoy";
+                else if (chainId === 31337) networkName = "hardhat/anvil";
                 else networkName = `Chain ID ${chainId}`;
             }
 
-            // Update UI
+            // Update UI Header
             document.getElementById("wallet-address-display").innerText = walletAddress.substring(0,6) + "..." + walletAddress.substring(walletAddress.length - 4);
             document.getElementById("network-badge").innerText = networkName.toUpperCase();
             document.getElementById("network-badge").className = "abi-badge";
@@ -1016,14 +1131,35 @@
 
             logConsole("Billetera conectada: " + walletAddress + " (" + networkName + ")", "info");
 
-            // Auto load contract from URL parameter if present
-            if (window.autoLoadAddress) {
-                const addrToLoad = window.autoLoadAddress;
-                window.autoLoadAddress = null; // Prevent double trigger
-                logConsole(`Cargando contrato desde parámetro URL: ${addrToLoad}`, "info");
-                setTimeout(() => {
-                    loadExistingContract();
-                }, 500);
+            if (window.isClientSession) {
+                // Client portal update
+                document.getElementById("client-connection-status").innerText = `🟢 Conectado: ${walletAddress.substring(0,6)}...${walletAddress.substring(38)}`;
+                document.getElementById("client-connection-status").style.color = "var(--success)";
+                
+                const clientBtn = document.getElementById("client-transfer-btn");
+                clientBtn.innerText = `Confirmar y Pagar ${window.clientSessionData.amount} ${window.clientSessionData.symbol}`;
+                clientBtn.disabled = false;
+            } else {
+                // Admin dashboard updates
+                document.getElementById("no-wallet-interaction-msg").classList.add("hidden");
+                document.getElementById("interaction-area").classList.remove("hidden");
+
+                // Autofill session receiver address with connected address
+                const sessionToInput = document.getElementById("session-to-input");
+                if (sessionToInput && !sessionToInput.value.trim()) {
+                    sessionToInput.value = walletAddress;
+                }
+
+                // Load assets and balances
+                await loadBalances(chainId);
+
+                // Auto load contract from URL parameter if present
+                if (window.autoLoadAddress) {
+                    const addrToLoad = window.autoLoadAddress;
+                    window.autoLoadAddress = null; // Prevent double trigger
+                    logConsole(`Cargando contrato desde parámetro URL: ${addrToLoad}`, "info");
+                    await addCustomTokenDirectly(addrToLoad);
+                }
             }
         }
 
@@ -1033,6 +1169,17 @@
             document.getElementById("connection-indicator").className = "status-dot";
             document.getElementById("connect-wallet-btn").innerText = "Conectar Billetera";
             document.getElementById("deploy-contract-btn").setAttribute("disabled", "true");
+            
+            if (window.isClientSession) {
+                document.getElementById("client-connection-status").innerText = "🔴 Billetera No Conectada";
+                document.getElementById("client-connection-status").style.color = "var(--danger)";
+                document.getElementById("client-transfer-btn").innerText = "Conectar Billetera y Pagar";
+                document.getElementById("client-transfer-btn").disabled = false;
+            } else {
+                document.getElementById("no-wallet-interaction-msg").classList.remove("hidden");
+                document.getElementById("interaction-area").classList.add("hidden");
+            }
+            
             logConsole("Billetera desconectada", "info");
         }
 
@@ -1317,6 +1464,12 @@
             const container = document.getElementById("assets-list-container");
             container.innerHTML = "";
 
+            // Also populate session asset select dropdown in Step 04
+            const assetSelect = document.getElementById("session-asset-select");
+            if (assetSelect) {
+                assetSelect.innerHTML = "";
+            }
+
             assetsList.forEach((asset, index) => {
                 const item = document.createElement("div");
                 item.className = "asset-item";
@@ -1347,6 +1500,14 @@
                 item.appendChild(info);
                 item.appendChild(balance);
                 container.appendChild(item);
+
+                // Add to Session dropdown
+                if (assetSelect) {
+                    const opt = document.createElement("option");
+                    opt.value = index;
+                    opt.innerText = `${asset.symbol} - ${asset.name} (Saldo: ${Number(asset.balance).toFixed(4)})`;
+                    assetSelect.appendChild(opt);
+                }
             });
 
             // Auto-select first asset (native) if none selected
@@ -1569,6 +1730,175 @@
                 btnDirect.style.color = "white";
                 btnDirect.style.background = "rgba(255,255,255,0.08)";
                 textDesc.innerHTML = "Escanea este QR con la **cámara de tu celular** para abrir en tu **navegador web normal**";
+            }
+
+        // Client Session UI Initialization
+        window.clientSessionData = {};
+
+        function setupClientSessionUI(urlParams) {
+            const sessionVal = urlParams.get('session') || "Directa";
+            const toVal = urlParams.get('to');
+            const amountVal = urlParams.get('amount');
+            const contractVal = urlParams.get('contract') || "native";
+            const symbolVal = urlParams.get('symbol') || "ETH";
+            const decimalsVal = parseInt(urlParams.get('decimals') || "18");
+            
+            window.clientSessionData = {
+                session: sessionVal,
+                to: toVal,
+                amount: amountVal,
+                contract: contractVal,
+                symbol: symbolVal,
+                decimals: decimalsVal
+            };
+
+            document.getElementById("client-session-id").innerText = `Sesión: #${sessionVal}`;
+            document.getElementById("client-amount-display").innerText = `${amountVal} ${symbolVal}`;
+            document.getElementById("client-recipient-display").innerText = toVal;
+            
+            let netDesc = "EVM Compatible";
+            const netParam = urlParams.get('network');
+            if (netParam) {
+                if (netParam === "137") netDesc = "Polygon MATIC";
+                else if (netParam === "1") netDesc = "Ethereum Mainnet";
+                else if (netParam === "56") netDesc = "BNB Chain";
+                else if (netParam === "11155111") netDesc = "Sepolia Testnet";
+            }
+            document.getElementById("client-network-display").innerText = netDesc;
+        }
+
+        async function handleClientButtonClick() {
+            if (!signer) {
+                showWalletSelector();
+                return;
+            }
+            
+            const clientBtn = document.getElementById("client-transfer-btn");
+            const originalText = clientBtn.innerText;
+            clientBtn.disabled = true;
+            clientBtn.innerHTML = `<span class="spinner"></span> Procesando Pago...`;
+            
+            const receiptBox = document.getElementById("client-receipt-box");
+            receiptBox.className = "result-box";
+            receiptBox.innerText = "Firme la transacción en su billetera...";
+            receiptBox.classList.remove("hidden");
+
+            try {
+                let tx;
+                const { to, amount, contract, decimals } = window.clientSessionData;
+                
+                if (contract === "native") {
+                    tx = await signer.sendTransaction({
+                        to: to,
+                        value: ethers.parseEther(amount)
+                    });
+                } else {
+                    const erc20 = new ethers.Contract(contract, MIN_ERC20_ABI, signer);
+                    const units = ethers.parseUnits(amount, decimals);
+                    tx = await erc20.transfer(to, units);
+                }
+
+                receiptBox.innerText = `Pago enviado. Confirmando... Hash: ${tx.hash.substring(0, 10)}...`;
+                
+                const receipt = await tx.wait();
+                
+                receiptBox.className = "result-box success";
+                receiptBox.innerText = `¡Pago confirmado con éxito en bloque ${receipt.blockNumber}!`;
+                clientBtn.innerText = "¡Pago Completado!";
+                
+            } catch (err) {
+                console.error(err);
+                receiptBox.className = "result-box error";
+                receiptBox.innerText = `Error: ${err.message || err}`;
+                clientBtn.disabled = false;
+                clientBtn.innerText = originalText;
+            }
+        }
+
+        function generateBillingSession() {
+            const assetIndex = document.getElementById("session-asset-select").value;
+            const to = document.getElementById("session-to-input").value.trim();
+            const amount = document.getElementById("session-amount-input").value.trim();
+            const sessionId = document.getElementById("session-id-input").value.trim() || "Factura-" + Math.floor(Math.random() * 900 + 100);
+
+            if (!to || !ethers.isAddress(to)) {
+                alert("Por favor, ingresa una dirección de billetera destinataria válida.");
+                return;
+            }
+
+            if (!amount || Number(amount) <= 0) {
+                alert("Por favor, ingresa un monto válido a solicitar.");
+                return;
+            }
+
+            const asset = assetsList[assetIndex];
+            const contractVal = asset.isNative ? "native" : asset.address;
+            
+            const params = new URLSearchParams();
+            params.set("session", sessionId);
+            params.set("to", to);
+            params.set("amount", amount);
+            params.set("contract", contractVal);
+            params.set("symbol", asset.symbol);
+            params.set("decimals", asset.decimals.toString());
+            
+            if (provider && provider._network) {
+                params.set("network", provider._network.chainId.toString());
+            }
+
+            sessionUrl = window.location.origin + window.location.pathname + "?" + params.toString();
+            
+            document.getElementById("session-link-input").value = sessionUrl;
+            document.getElementById("session-share-area").classList.remove("hidden");
+            
+            // Set Trust Wallet as default QR
+            updateSessionQR("trust");
+            
+            logConsole(`Sesión de pago generada: ${sessionId}`, "success");
+        }
+
+        function copySessionLink() {
+            const copyText = document.getElementById("session-link-input");
+            copyText.select();
+            copyText.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(copyText.value);
+            
+            const btn = document.getElementById("copy-session-btn");
+            const orig = btn.innerText;
+            btn.innerText = "¡Copiado!";
+            setTimeout(() => { btn.innerText = orig; }, 1500);
+        }
+
+        function updateSessionQR(mode) {
+            currentSessionMode = mode;
+            if (!sessionUrl) return;
+
+            const btnTrust = document.getElementById("session-qr-tab-trust");
+            const btnMeta = document.getElementById("session-qr-tab-metamask");
+            const btnDirect = document.getElementById("session-qr-tab-direct");
+            const textDesc = document.getElementById("session-qr-text");
+            const qrImg = document.getElementById("session-qr-image");
+
+            [btnTrust, btnMeta, btnDirect].forEach(btn => {
+                btn.style.color = "var(--text-secondary)";
+                btn.style.background = "transparent";
+            });
+
+            let finalUrl = sessionUrl;
+            if (mode === "trust") {
+                btnTrust.style.color = "white";
+                btnTrust.style.background = "rgba(255,255,255,0.08)";
+                textDesc.innerHTML = "Escanea este QR para abrir directamente en **Trust Wallet**";
+                finalUrl = `https://link.trustwallet.com/open_url?coin_id=60&url=${encodeURIComponent(sessionUrl)}`;
+            } else if (mode === "metamask") {
+                btnMeta.style.color = "white";
+                btnMeta.style.background = "rgba(255,255,255,0.08)";
+                textDesc.innerHTML = "Escanea este QR para abrir directamente en **MetaMask**";
+                finalUrl = `https://metamask.app.link/dapp/${sessionUrl.replace(/^https?:\/\//, "")}`;
+            } else {
+                btnDirect.style.color = "white";
+                btnDirect.style.background = "rgba(255,255,255,0.08)";
+                textDesc.innerHTML = "Escanea este QR para abrir en tu **navegador web normal**";
             }
 
             qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(finalUrl)}`;
