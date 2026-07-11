@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blockchain Contract Deployer & Interactive Dashboard</title>
+    <!-- Google Fonts: Inter & Space Grotesk -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Ethers.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --panel-bg: rgba(17, 24, 39, 0.7);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --accent-color: #00ffcc;
+            --accent-glow: rgba(0, 255, 204, 0.35);
+            --accent-purple: #8b5cf6;
+            --accent-purple-glow: rgba(139, 92, 246, 0.35);
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --danger: #ef4444;
+            --success: #10b981;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(139, 92, 246, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(0, 255, 204, 0.1) 0%, transparent 40%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            padding: 2rem 1rem;
+            line-height: 1.5;
+        }
+
+        h1, h2, h3, .brand-font {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        /* Header styling */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .logo-area h1 {
+            font-size: 1.8rem;
+            background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-purple) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .logo-area p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        /* Wallet box styling */
+        .wallet-card {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(16px);
+            padding: 0.6rem 1.2rem;
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            transition: all 0.3s ease;
+        }
+
+        .wallet-card:hover {
+            border-color: rgba(0, 255, 204, 0.3);
+            box-shadow: 0 0 15px rgba(0, 255, 204, 0.1);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--danger);
+            box-shadow: 0 0 8px var(--danger);
+            display: inline-block;
+        }
+
+        .status-dot.connected {
+            background-color: var(--success);
+            box-shadow: 0 0 8px var(--success);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, var(--accent-color) 0%, #00b395 100%);
+            border: none;
+            color: #05050a;
+            padding: 0.6rem 1.4rem;
+            font-weight: 600;
+            border-radius: 9999px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-family: 'Space Grotesk', sans-serif;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 12px rgba(0, 255, 204, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px var(--accent-glow);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-purple {
+            background: linear-gradient(135deg, var(--accent-purple) 0%, #6d28d9 100%);
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
+        }
+
+        .btn-purple:hover {
+            box-shadow: 0 6px 20px var(--accent-purple-glow);
+        }
+
+        .btn:disabled {
+            background: #272d38;
+            color: var(--text-secondary);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Layout Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 1.8fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 850px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Panel Glass Styling */
+        .glass-panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass-panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-color), var(--accent-purple));
+        }
+
+        .panel-title {
+            font-size: 1.3rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        .panel-title span {
+            color: var(--accent-color);
+        }
+
+        /* Form elements */
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.4rem;
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            background: rgba(10, 15, 26, 0.8);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.8rem 1rem;
+            color: #ffffff;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 10px rgba(0, 255, 204, 0.15);
+        }
+
+        .form-control::placeholder {
+            color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Key-Value Lists */
+        .info-list {
+            list-style: none;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 0.9rem;
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: var(--text-secondary);
+        }
+
+        .info-val {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 500;
+            word-break: break-all;
+            text-align: right;
+            max-width: 60%;
+        }
+
+        /* Logs / Status console */
+        .console-log {
+            background: #05070c;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.8rem;
+            max-height: 200px;
+            overflow-y: auto;
+            color: #a7f3d0;
+            margin-top: 1rem;
+        }
+
+        .console-line {
+            margin-bottom: 0.4rem;
+            border-left: 2px solid var(--accent-color);
+            padding-left: 0.5rem;
+        }
+
+        .console-line.error {
+            border-left-color: var(--danger);
+            color: #fecaca;
+        }
+
+        .console-line.info {
+            border-left-color: var(--accent-purple);
+            color: #ddd6fe;
+        }
+
+        /* ABI tag */
+        .abi-badge {
+            background: rgba(139, 92, 246, 0.1);
+            color: var(--accent-purple);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            display: inline-block;
+        }
+
+        /* Contract Interaction Board */
+        .interaction-board {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 700px) {
+            .interaction-board {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .interactive-card {
+            background: rgba(10, 15, 26, 0.4);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.2rem;
+            transition: all 0.3s ease;
+        }
+
+        .interactive-card:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .card-header-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .card-tag {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-weight: 700;
+        }
+
+        .card-tag.read {
+            background: rgba(0, 255, 204, 0.1);
+            color: var(--accent-color);
+            border: 1px solid rgba(0, 255, 204, 0.2);
+        }
+
+        .card-tag.write {
+            background: rgba(139, 92, 246, 0.1);
+            color: var(--accent-purple);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+        }
+
+        .card-title {
+            font-size: 1rem;
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        .result-box {
+            margin-top: 1rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 6px;
+            padding: 0.6rem;
+            font-family: monospace;
+            font-size: 0.85rem;
+            border-left: 3px solid #374151;
+            word-break: break-all;
+            min-height: 35px;
+            display: flex;
+            align-items: center;
+        }
+
+        .result-box.success {
+            border-left-color: var(--success);
+            background: rgba(16, 185, 129, 0.05);
+            color: #a7f3d0;
+        }
+
+        .result-box.error {
+            border-left-color: var(--danger);
+            background: rgba(239, 68, 68, 0.05);
+            color: #fecaca;
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(5, 5, 10, 0.3);
+            border-top: 2px solid currentColor;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            display: inline-block;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Utility classes */
+        .text-center { text-align: center; }
+        .mt-2 { margin-top: 0.5rem; }
+        .mt-4 { margin-top: 1rem; }
+        .hidden { display: none !important; }
+        
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            color: var(--accent-color);
+            border-bottom-color: var(--accent-color);
+        }
+
+        .tabs-header {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- HEADER -->
+        <header>
+            <div class="logo-area">
+                <h1>Web3 Contract Deployer</h1>
+                <p>Compila con solc local, despliega con tu Trust Wallet / MetaMask</p>
+            </div>
+            
+            <div class="wallet-card">
+                <span id="network-badge" class="abi-badge">No Conectado</span>
+                <div id="connection-indicator" class="status-dot"></div>
+                <span id="wallet-address-display" class="info-val" style="font-size: 0.85rem; max-width: 140px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">Desconectado</span>
+                <button id="connect-wallet-btn" class="btn" style="padding: 0.4rem 1rem; font-size: 0.8rem;">
+                    Conectar Billetera
+                </button>
+            </div>
+        </header>
+
+        <!-- MAIN DASHBOARD GRID -->
+        <div class="dashboard-grid">
+            
+            <!-- LEFT PANEL: CONTRACT METADATA & DEPLOYMENT -->
+            <div>
+                <!-- Metadata Card -->
+                <div class="glass-panel">
+                    <h2 class="panel-title"><span>01</span> Detalles del Contrato</h2>
+                    <ul class="info-list">
+                        <li class="info-item">
+                            <span class="info-label">Nombre:</span>
+                            <span id="meta-contract-name" class="info-val">Cargando...</span>
+                        </li>
+                        <li class="info-item">
+                            <span class="info-label">Compilador:</span>
+                            <span class="info-val">solc v0.8.20</span>
+                        </li>
+                        <li class="info-item">
+                            <span class="info-label">Bytecode:</span>
+                            <span id="meta-bytecode-size" class="info-val">0 bytes</span>
+                        </li>
+                        <li class="info-item">
+                            <span class="info-label">Rutas de Entrada:</span>
+                            <span class="info-val">Autocontenido</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Deploy Card -->
+                <div class="glass-panel">
+                    <h2 class="panel-title"><span>02</span> Configurar y Desplegar</h2>
+                    
+                    <div id="constructor-form-container">
+                        <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1rem;">
+                            Detectando parámetros del constructor en el ABI...
+                        </p>
+                        <!-- Dynamic inputs will be placed here -->
+                    </div>
+
+                    <button id="deploy-contract-btn" class="btn btn-purple" style="width: 100%; justify-content: center; margin-top: 1.5rem;" disabled>
+                        <span>Desplegar Contrato</span>
+                    </button>
+
+                    <div id="console-output" class="console-log hidden">
+                        <!-- Deployment logging console -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT PANEL: INTERACTIVE DASHBOARD -->
+            <div>
+                <!-- Deployed Address Indicator -->
+                <div class="glass-panel" id="deployment-success-card" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(17, 24, 39, 0.8) 100%); border-color: rgba(16, 185, 129, 0.3); display: none;">
+                    <h2 class="panel-title" style="color: var(--success);"><span style="color: var(--success);">✓</span> ¡Despliegue Exitoso!</h2>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                        Tu contrato inteligente ha sido minado y está activo en la blockchain.
+                    </p>
+                    <div class="info-item" style="border: none; background: rgba(0, 0, 0, 0.2); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                        <span class="info-label" style="text-align: left;">Dirección del Contrato:</span>
+                        <a id="deployed-address-link" href="#" target="_blank" class="info-val" style="color: var(--accent-color); text-decoration: underline;">
+                            0x...
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Dashboard Interactive Area -->
+                <div class="glass-panel">
+                    <h2 class="panel-title"><span>03</span> Panel de Interacción Directa</h2>
+                    
+                    <div id="no-deployed-contract-msg" class="text-center" style="padding: 3rem 0; color: var(--text-secondary);">
+                        <p style="font-size: 1.1rem; margin-bottom: 0.5rem;">Aún no se ha desplegado ningún contrato</p>
+                        <p style="font-size: 0.85rem;">Completa el paso 02 para activar este panel interactivo.</p>
+                        <p class="mt-4" style="font-size: 0.8rem; color: var(--accent-purple);">
+                            O conecta un contrato ya desplegado:
+                        </p>
+                        <div style="display: flex; gap: 0.5rem; max-width: 400px; margin: 1rem auto 0 auto;">
+                            <input type="text" id="existing-address-input" class="form-control" placeholder="0x..." style="font-size: 0.8rem; padding: 0.5rem 0.8rem;">
+                            <button id="load-existing-btn" class="btn" style="padding: 0.5rem 1rem; font-size: 0.8rem;">Cargar</button>
+                        </div>
+                    </div>
+
+                    <div id="interaction-area" class="hidden">
+                        <div class="tabs-header">
+                            <button id="tab-read" class="tab-btn active" onclick="switchTab('read')">Lectura (Read)</button>
+                            <button id="tab-write" class="tab-btn" onclick="switchTab('write')">Escritura (Write)</button>
+                        </div>
+
+                        <!-- Read Functions -->
+                        <div id="read-functions-container" class="interaction-board">
+                            <!-- Dynamic read functions cards -->
+                        </div>
+
+                        <!-- Write Functions -->
+                        <div id="write-functions-container" class="interaction-board hidden">
+                            <!-- Dynamic write functions cards -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- CODE BLOCK INJECTED BY COMPILER -->
+    <script>
+        // Estos marcadores de posición serán reemplazados por el script de compilación compile.ps1
+        const CONTRACT_NAME = "CustomToken";
+        const CONTRACT_ABI = [{"inputs":[{"internalType":"string","name":"_name","type":"string"},{"internalType":"string","name":"_symbol","type":"string"},{"internalType":"uint8","name":"_decimals","type":"uint8"},{"internalType":"uint256","name":"_initialSupply","type":"uint256"}],"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"owner","type":"address"},{"indexed":true,"internalType":"address","name":"spender","type":"address"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"Approval","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"from","type":"address"},{"indexed":true,"internalType":"address","name":"to","type":"address"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"Transfer","type":"event"},{"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"address","name":"spender","type":"address"}],"name":"allowance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"approve","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"balanceOf","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"decimals","outputs":[{"internalType":"uint8","name":"","type":"uint8"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"name","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"symbol","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"totalSupply","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"transfer","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"from","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"transferFrom","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"}];
+        const CONTRACT_BYTECODE = "0x608060405234801562000010575f80fd5b5060405162001b1338038062001b13833981810160405281019062000036919062000347565b835f908162000046919062000622565b50826001908162000058919062000622565b508160025f6101000a81548160ff021916908360ff1602179055508160ff16600a62000085919062000883565b81620000929190620008d3565b60038190555060035460045f3373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020015f20819055503373ffffffffffffffffffffffffffffffffffffffff165f73ffffffffffffffffffffffffffffffffffffffff167fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef6003546040516200013d91906200092e565b60405180910390a35050505062000949565b5f604051905090565b5f80fd5b5f80fd5b5f80fd5b5f80fd5b5f601f19601f8301169050919050565b7f4e487b71000000000000000000000000000000000000000000000000000000005f52604160045260245ffd5b620001b08262000168565b810181811067ffffffffffffffff82111715620001d257620001d162000178565b5b80604052505050565b5f620001e66200014f565b9050620001f48282620001a5565b919050565b5f67ffffffffffffffff82111562000216576200021562000178565b5b620002218262000168565b9050602081019050919050565b5f5b838110156200024d57808201518184015260208101905062000230565b5f8484015250505050565b5f6200026e6200026884620001f9565b620001db565b9050828152602081018484840111156200028d576200028c62000164565b5b6200029a8482856200022e565b509392505050565b5f82601f830112620002b957620002b862000160565b5b8151620002cb84826020860162000258565b91505092915050565b5f60ff82169050919050565b620002eb81620002d4565b8114620002f6575f80fd5b50565b5f815190506200030981620002e0565b92915050565b5f819050919050565b62000323816200030f565b81146200032e575f80fd5b50565b5f81519050620003418162000318565b92915050565b5f805f806080858703121562000362576200036162000158565b5b5f85015167ffffffffffffffff8111156200038257620003816200015c565b5b6200039087828801620002a2565b945050602085015167ffffffffffffffff811115620003b457620003b36200015c565b5b620003c287828801620002a2565b9350506040620003d587828801620002f9565b9250506060620003e88782880162000331565b91505092959194509250565b5f81519050919050565b7f4e487b71000000000000000000000000000000000000000000000000000000005f52602260045260245ffd5b5f60028204905060018216806200044357607f821691505b602082108103620004595762000458620003fe565b5b50919050565b5f819050815f5260205f209050919050565b5f6020601f8301049050919050565b5f82821b905092915050565b5f60088302620004bd7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff8262000480565b620004c9868362000480565b95508019841693508086168417925050509392505050565b5f819050919050565b5f6200050a62000504620004fe846200030f565b620004e1565b6200030f565b9050919050565b5f819050919050565b6200052583620004ea565b6200053d620005348262000511565b8484546200048c565b825550505050565b5f90565b6200055362000545565b620005608184846200051a565b505050565b5b8181101562000587576200057b5f8262000549565b60018101905062000566565b5050565b601f821115620005d657620005a0816200045f565b620005ab8462000471565b81016020851015620005bb578190505b620005d3620005ca8562000471565b83018262000565565b50505b505050565b5f82821c905092915050565b5f620005f85f1984600802620005db565b1980831691505092915050565b5f620006128383620005e7565b9150826002028217905092915050565b6200062d82620003f4565b67ffffffffffffffff81111562000649576200064862000178565b5b6200065582546200042b565b620006628282856200058b565b5f60209050601f83116001811462000698575f841562000683578287015190505b6200068f858262000605565b865550620006fe565b601f198416620006a8866200045f565b5f5b82811015620006d157848901518255600182019150602085019450602081019050620006aa565b86831015620006f15784890151620006ed601f891682620005e7565b8355505b6001600288020188555050505b505050505050565b7f4e487b71000000000000000000000000000000000000000000000000000000005f52601160045260245ffd5b5f8160011c9050919050565b5f808291508390505b6001851115620007905780860481111562000768576200076762000706565b5b6001851615620007785780820291505b8081029050620007888562000733565b945062000748565b94509492505050565b5f82620007aa57600190506200087c565b81620007b9575f90506200087c565b8160018114620007d25760028114620007dd5762000813565b60019150506200087c565b60ff841115620007f257620007f162000706565b5b8360020a9150848211156200080c576200080b62000706565b5b506200087c565b5060208310610133831016604e8410600b84101617156200084d5782820a90508381111562000847576200084662000706565b5b6200087c565b6200085c84848460016200073f565b9250905081840481111562000876576200087562000706565b5b81810290505b9392505050565b5f6200088f826200030f565b91506200089c836200030f565b9250620008cb7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff848462000799565b905092915050565b5f620008df826200030f565b9150620008ec836200030f565b9250828202620008fc816200030f565b9150828204841483151762000916576200091562000706565b5b5092915050565b62000928816200030f565b82525050565b5f602082019050620009435f8301846200091d565b92915050565b6111bc80620009575f395ff3fe608060405234801561000f575f80fd5b5060043610610091575f3560e01c8063313ce56711610064578063313ce5671461013157806370a082311461014f57806395d89b411461017f578063a9059cbb1461019d578063dd62ed3e146101cd57610091565b806306fdde0314610095578063095ea7b3146100b357806318160ddd146100e357806323b872dd14610101575b5f80fd5b61009d6101fd565b6040516100aa9190610b99565b60405180910390f35b6100cd60048036038101906100c89190610c4a565b610288565b6040516100da9190610ca2565b60405180910390f35b6100eb6103e3565b6040516100f89190610cca565b60405180910390f35b61011b60048036038101906101169190610ce3565b6103e9565b6040516101289190610ca2565b60405180910390f35b6101396107a5565b6040516101469190610d4e565b60405180910390f35b61016960048036038101906101649190610d67565b6107b7565b6040516101769190610cca565b60405180910390f35b6101876107fd565b6040516101949190610b99565b60405180910390f35b6101b760048036038101906101b29190610c4a565b610889565b6040516101c49190610ca2565b60405180910390f35b6101e760048036038101906101e29190610d92565b610a8d565b6040516101f49190610cca565b60405180910390f35b5f805461020990610dfd565b80601f016020809104026020016040519081016040528092919081815260200182805461023590610dfd565b80156102805780601f1061025757610100808354040283529160200191610280565b820191905f5260205f20905b81548152906001019060200180831161026357829003601f168201915b505050505081565b5f8073ffffffffffffffffffffffffffffffffffffffff168373ffffffffffffffffffffffffffffffffffffffff16036102f7576040517f08c379a00000000000000000000000000000000000000000000000000000000081526004016102ee90610e9d565b60405180910390fd5b8160055f3373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020015f205f8573ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020015f20819055508273ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff167f8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925846040516103d19190610cca565b60405180910390a36001905092915050565b60035481565b5f8073ffffffffffffffffffffffffffffffffffffffff168473ffffffffffffffffffffffffffffffffffffffff1603610458576040517f08c379a000000000000000000000000000000000000000000000000000000000815260040161044f90610f2b565b60405180910390fd5b5f73ffffffffffffffffffffffffffffffffffffffff168373ffffffffffffffffffffffffffffffffffffffff16036104c6576040517f08c379a00000000000000000000000000000000000000000000000000000000081526004016104bd90610fb9565b60405180910390fd5b8160045f8673ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020015f20541015610546576040517f08c379a000000000000000000000000000000000000000000000000000000000815260040161053d90611047565b60405180910390fd5b8160055f8673ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020015f205f3373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020015f20541015610601576040517f08c379a00000000000000000000000000000000000000000000000000000000081526004016105f8906110d5565b60405180910390fd5b8160045f8673ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020015f205f82825461064d9190611120565b925050819055508160045f8573ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020015f205f8282546106a09190611153565b925050819055508160055f8673ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020015f205f3373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020015f205f82825461072e9190611120565b925050819055508273ffffffffffffffffffffffffffffffffffffffff168473ffffffffffffffffffffffffffffffffffffffff167fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef846040516107929190610cca565b60405180910390a3600190509392505050565b60025f9054906101000a900460ff1681565b5f60045f8373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020015f20549050919050565b6001805461080a90610dfd565b80601f016020809104026020016040519081016040528092919081815260200182805461083690610dfd565b80156108815780601f1061085857610100808354040283529160200191610881565b820191905f5260205f20905b81548152906001019060200180831161086457829003601f168201915b505050505081565b5f8073ffffffffffffffffffffffffffffffffffffffff168373ffffffffffffffffffffffffffffffffffffffff16036108f8576040517f08c379a00000000000000000000000000000000000000000000000000000000081526004016108ef90610fb9565b60405180910390fd5b8160045f3373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020015f20541015610978576040517f08c379a000000000000000000000000000000000000000000000000000000000815260040161096f90611047565b60405180910390fd5b8160045f3373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020015f205f8282546109c49190611120565b925050819055508160045f8573ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020015f205f828254610a179190611153565b925050819055508273ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff167fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef84604051610a7b9190610cca565b60405180910390a36001905092915050565b5f60055f8473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020015f205f8373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020015f2054905092915050565b5f81519050919050565b5f82825260208201905092915050565b5f5b83811015610b46578082015181840152602081019050610b2b565b5f8484015250505050565b5f601f19601f8301169050919050565b5f610b6b82610b0f565b610b758185610b19565b9350610b85818560208601610b29565b610b8e81610b51565b840191505092915050565b5f6020820190508181035f830152610bb18184610b61565b905092915050565b5f80fd5b5f73ffffffffffffffffffffffffffffffffffffffff82169050919050565b5f610be682610bbd565b9050919050565b610bf681610bdc565b8114610c00575f80fd5b50565b5f81359050610c1181610bed565b92915050565b5f819050919050565b610c2981610c17565b8114610c33575f80fd5b50565b5f81359050610c4481610c20565b92915050565b5f8060408385031215610c6057610c5f610bb9565b5b5f610c6d85828601610c03565b9250506020610c7e85828601610c36565b9150509250929050565b5f8115159050919050565b610c9c81610c88565b82525050565b5f602082019050610cb55f830184610c93565b92915050565b610cc481610c17565b82525050565b5f602082019050610cdd5f830184610cbb565b92915050565b5f805f60608486031215610cfa57610cf9610bb9565b5b5f610d0786828701610c03565b9350506020610d1886828701610c03565b9250506040610d2986828701610c36565b9150509250925092565b5f60ff82169050919050565b610d4881610d33565b82525050565b5f602082019050610d615f830184610d3f565b92915050565b5f60208284031215610d7c57610d7b610bb9565b5b5f610d8984828501610c03565b91505092915050565b5f8060408385031215610da857610da7610bb9565b5b5f610db585828601610c03565b9250506020610dc685828601610c03565b9150509250929050565b7f4e487b71000000000000000000000000000000000000000000000000000000005f52602260045260245ffd5b5f6002820490506001821680610e1457607f821691505b602082108103610e2757610e26610dd0565b5b50919050565b7f45524332303a20617070726f766520746f20746865207a65726f2061646472655f8201527f7373000000000000000000000000000000000000000000000000000000000000602082015250565b5f610e87602283610b19565b9150610e9282610e2d565b604082019050919050565b5f6020820190508181035f830152610eb481610e7b565b9050919050565b7f45524332303a207472616e736665722066726f6d20746865207a65726f2061645f8201527f6472657373000000000000000000000000000000000000000000000000000000602082015250565b5f610f15602583610b19565b9150610f2082610ebb565b604082019050919050565b5f6020820190508181035f830152610f4281610f09565b9050919050565b7f45524332303a207472616e7366657220746f20746865207a65726f20616464725f8201527f6573730000000000000000000000000000000000000000000000000000000000602082015250565b5f610fa3602383610b19565b9150610fae82610f49565b604082019050919050565b5f6020820190508181035f830152610fd081610f97565b9050919050565b7f45524332303a207472616e7366657220616d6f756e74206578636565647320625f8201527f616c616e63650000000000000000000000000000000000000000000000000000602082015250565b5f611031602683610b19565b915061103c82610fd7565b604082019050919050565b5f6020820190508181035f83015261105e81611025565b9050919050565b7f45524332303a207472616e7366657220616d6f756e74206578636565647320615f8201527f6c6c6f77616e6365000000000000000000000000000000000000000000000000602082015250565b5f6110bf602883610b19565b91506110ca82611065565b604082019050919050565b5f6020820190508181035f8301526110ec816110b3565b9050919050565b7f4e487b71000000000000000000000000000000000000000000000000000000005f52601160045260245ffd5b5f61112a82610c17565b915061113583610c17565b925082820390508181111561114d5761114c6110f3565b5b92915050565b5f61115d82610c17565b915061116883610c17565b92508282019050808211156111805761117f6110f3565b5b9291505056fea2646970667358221220a67d3fb96813d179a53d7fa57cffbbc19e682357ba0eabd252df1c16ed79d94f64736f6c63430008140033";
+    </script>
+
+    <!-- CORE INTERACTION SCRIPT -->
+    <script>
+        let provider;
+        let signer;
+        let walletAddress;
+        let networkName;
+        let deployedContractAddress = "";
+        let contractInstance = null;
+
+        // Initialize UI Elements
+        document.addEventListener("DOMContentLoaded", () => {
+            setupContractMetadata();
+            setupWalletListeners();
+            setupConstructorForm();
+
+            document.getElementById("connect-wallet-btn").addEventListener("click", connectWallet);
+            document.getElementById("deploy-contract-btn").addEventListener("click", deployContract);
+            document.getElementById("load-existing-btn").addEventListener("click", loadExistingContract);
+        });
+
+        // Set Contract Metadata on screen
+        function setupContractMetadata() {
+            if (CONTRACT_NAME.startsWith("/*")) {
+                // Not compiled yet (raw template)
+                document.getElementById("meta-contract-name").innerText = "No compilado";
+                document.getElementById("meta-bytecode-size").innerText = "0 bytes";
+                return;
+            }
+            document.getElementById("meta-contract-name").innerText = CONTRACT_NAME;
+            const bytesLength = CONTRACT_BYTECODE.length / 2 - 1; // hex bytes size
+            document.getElementById("meta-bytecode-size").innerText = `${bytesLength.toLocaleString()} bytes`;
+        }
+
+        // Setup Wallet Event Listeners
+        function setupWalletListeners() {
+            if (window.ethereum) {
+                window.ethereum.on('accountsChanged', (accounts) => {
+                    if (accounts.length > 0) {
+                        handleNewAccounts(accounts);
+                    } else {
+                        disconnectWalletUI();
+                    }
+                });
+
+                window.ethereum.on('chainChanged', () => {
+                    window.location.reload();
+                });
+                
+                // Try eager connection if already authorized
+                window.ethereum.request({ method: 'eth_accounts' })
+                    .then(accounts => {
+                        if (accounts.length > 0) {
+                            connectWallet();
+                        }
+                    }).catch(console.error);
+            } else {
+                logConsole("Billetera no detectada. Por favor instala Trust Wallet o MetaMask.", "error");
+            }
+        }
+
+        // Connect Wallet Function
+        async function connectWallet() {
+            if (!window.ethereum) {
+                alert("Por favor, instala la extensión de Trust Wallet o MetaMask en tu navegador.");
+                return;
+            }
+
+            try {
+                logConsole("Conectando con la billetera...", "info");
+                provider = new ethers.BrowserProvider(window.ethereum);
+                const accounts = await provider.send("eth_requestAccounts", []);
+                signer = await provider.getSigner();
+                await handleNewAccounts(accounts);
+            } catch (error) {
+                console.error(error);
+                logConsole("Conexión de billetera rechazada por el usuario: " + error.message, "error");
+            }
+        }
+
+        async function handleNewAccounts(accounts) {
+            walletAddress = accounts[0];
+            const network = await provider.getNetwork();
+            
+            // Format Network Name nicely
+            networkName = network.name;
+            if (networkName === "unknown" || !networkName) {
+                const chainId = network.chainId;
+                if (chainId === 11155111n) networkName = "sepolia";
+                else if (chainId === 1n) networkName = "mainnet";
+                else if (chainId === 137n) networkName = "polygon";
+                else if (chainId === 80002n) networkName = "amoy";
+                else if (chainId === 31337n) networkName = "hardhat/anvil";
+                else networkName = `Chain ID ${chainId}`;
+            }
+
+            // Update UI
+            document.getElementById("wallet-address-display").innerText = walletAddress.substring(0,6) + "..." + walletAddress.substring(walletAddress.length - 4);
+            document.getElementById("network-badge").innerText = networkName.toUpperCase();
+            document.getElementById("network-badge").className = "abi-badge";
+            document.getElementById("connection-indicator").className = "status-dot connected";
+            document.getElementById("connect-wallet-btn").innerText = "Cambiar Cuenta";
+            
+            // Enable deploy button if contract is compiled
+            if (!CONTRACT_NAME.startsWith("/*")) {
+                document.getElementById("deploy-contract-btn").removeAttribute("disabled");
+            }
+
+            logConsole("Billetera conectada: " + walletAddress + " (" + networkName + ")", "info");
+        }
+
+        function disconnectWalletUI() {
+            document.getElementById("wallet-address-display").innerText = "Desconectado";
+            document.getElementById("network-badge").innerText = "No Conectado";
+            document.getElementById("connection-indicator").className = "status-dot";
+            document.getElementById("connect-wallet-btn").innerText = "Conectar Billetera";
+            document.getElementById("deploy-contract-btn").setAttribute("disabled", "true");
+            logConsole("Billetera desconectada", "info");
+        }
+
+        // Setup Constructor Form Dynamically
+        function setupConstructorForm() {
+            const container = document.getElementById("constructor-form-container");
+            container.innerHTML = "";
+
+            if (CONTRACT_NAME.startsWith("/*")) {
+                container.innerHTML = `<p style="color: var(--danger); font-size: 0.85rem;">El contrato aún no ha sido compilado. Ejecuta el script de compilación primero.</p>`;
+                return;
+            }
+
+            // Find Constructor in ABI
+            const constructorObj = CONTRACT_ABI.find(item => item.type === "constructor");
+            
+            if (!constructorObj || !constructorObj.inputs || constructorObj.inputs.length === 0) {
+                container.innerHTML = `<p style="color: var(--success); font-size: 0.85rem; padding: 0.5rem; background: rgba(16, 185, 129, 0.05); border-radius: 6px;">Este contrato no requiere parámetros para inicializarse (Constructor vacío).</p>`;
+                return;
+            }
+
+            // Render inputs
+            const formTitle = document.createElement("p");
+            formTitle.style.fontSize = "0.85rem";
+            formTitle.style.marginBottom = "0.8rem";
+            formTitle.style.color = "var(--text-secondary)";
+            formTitle.innerText = "Parámetros del Constructor:";
+            container.appendChild(formTitle);
+
+            constructorObj.inputs.forEach((input, index) => {
+                const group = document.createElement("div");
+                group.className = "form-group";
+                
+                const label = document.createElement("label");
+                label.innerText = `${input.name} (${input.type})`;
+                
+                const field = document.createElement("input");
+                field.type = "text";
+                field.id = `constructor-input-${index}`;
+                field.className = "form-control constructor-arg";
+                field.placeholder = getPlaceholderForType(input.type);
+                field.dataset.soltype = input.type;
+
+                group.appendChild(label);
+                group.appendChild(field);
+                container.appendChild(group);
+            });
+        }
+
+        function getPlaceholderForType(type) {
+            if (type.startsWith("uint") || type.startsWith("int")) return "Ej. 1000000";
+            if (type === "address") return "0x...";
+            if (type === "bool") return "true o false";
+            return "Texto de entrada";
+        }
+
+        // Log to inline console
+        function logConsole(message, type = "info") {
+            const consoleBox = document.getElementById("console-output");
+            consoleBox.classList.remove("hidden");
+            
+            const line = document.createElement("div");
+            line.className = `console-line ${type}`;
+            
+            const timestamp = new Date().toLocaleTimeString();
+            line.innerText = `[${timestamp}] ${message}`;
+            
+            consoleBox.appendChild(line);
+            consoleBox.scrollTop = consoleBox.scrollHeight;
+        }
+
+        // Deploy Contract Function
+        async function deployContract() {
+            if (!signer) {
+                alert("Primero debes conectar tu billetera.");
+                return;
+            }
+
+            const deployBtn = document.getElementById("deploy-contract-btn");
+            const originalText = deployBtn.innerHTML;
+            deployBtn.setAttribute("disabled", "true");
+            deployBtn.innerHTML = `<span class="spinner"></span> <span>Desplegando...</span>`;
+
+            logConsole("Iniciando despliegue de: " + CONTRACT_NAME, "info");
+
+            try {
+                // Get constructor arguments
+                const argElements = document.querySelectorAll(".constructor-arg");
+                const args = [];
+
+                for (let elem of argElements) {
+                    const val = elem.value.trim();
+                    if (!val) {
+                        throw new Error(`Falta completar el campo: ${elem.previousSibling.innerText}`);
+                    }
+                    args.push(parseSolidityValue(val, elem.dataset.soltype));
+                }
+
+                logConsole("Preparando transacción de despliegue...", "info");
+                
+                // Create factory
+                const factory = new ethers.ContractFactory(CONTRACT_ABI, CONTRACT_BYTECODE, signer);
+                
+                // Deploy
+                const contract = await factory.deploy(...args);
+                logConsole(`Transacción enviada. Hash: ${contract.deploymentTransaction().hash}`, "info");
+                logConsole("Esperando que los mineros confirmen la transacción (esto puede tomar 10-20 segundos)...", "info");
+
+                await contract.waitForDeployment();
+                
+                deployedContractAddress = await contract.getAddress();
+                contractInstance = contract;
+
+                logConsole(`¡Contrato desplegado con éxito en: ${deployedContractAddress}!`, "success");
+                
+                showDeploymentSuccess(deployedContractAddress);
+                setupInteractiveDashboard();
+
+            } catch (error) {
+                console.error(error);
+                logConsole(`Error en despliegue: ${error.message || error}`, "error");
+            } finally {
+                deployBtn.removeAttribute("disabled");
+                deployBtn.innerHTML = originalText;
+            }
+        }
+
+        function parseSolidityValue(value, type) {
+            if (type.startsWith("uint") || type.startsWith("int")) {
+                return BigInt(value);
+            }
+            if (type === "bool") {
+                return value.toLowerCase() === "true" || value === "1";
+            }
+            if (type.endsWith("[]")) {
+                // Simple array parsing (comma separated)
+                const clean = value.replace("[", "").replace("]", "");
+                const arr = clean.split(",").map(x => x.trim());
+                const elemType = type.substring(0, type.length - 2);
+                return arr.map(x => parseSolidityValue(x, elemType));
+            }
+            return value; // strings, address, etc.
+        }
+
+        // Show Deployment Success UI
+        function showDeploymentSuccess(address) {
+            const successCard = document.getElementById("deployment-success-card");
+            successCard.style.display = "block";
+            
+            const link = document.getElementById("deployed-address-link");
+            link.innerText = address;
+            
+            // Set up Etherscan explorer URL based on network
+            let baseUrl = "https://etherscan.io/address/";
+            if (networkName.includes("sepolia")) baseUrl = "https://sepolia.etherscan.io/address/";
+            else if (networkName.includes("polygon")) baseUrl = "https://polygonscan.com/address/";
+            else if (networkName.includes("amoy")) baseUrl = "https://amoy.polygonscan.com/address/";
+            
+            link.href = baseUrl + address;
+        }
+
+        // Set up interactive dashboard based on ABI functions
+        function setupInteractiveDashboard() {
+            document.getElementById("no-deployed-contract-msg").classList.add("hidden");
+            document.getElementById("interaction-area").classList.remove("hidden");
+
+            const readContainer = document.getElementById("read-functions-container");
+            const writeContainer = document.getElementById("write-functions-container");
+
+            readContainer.innerHTML = "";
+            writeContainer.innerHTML = "";
+
+            // Filter standard functions
+            const functions = CONTRACT_ABI.filter(item => item.type === "function");
+
+            functions.forEach(func => {
+                const isView = func.stateMutability === "view" || func.stateMutability === "pure";
+                const card = document.createElement("div");
+                card.className = "interactive-card mt-2";
+
+                // Header
+                const cardHeader = document.createElement("div");
+                cardHeader.className = "card-header-flex";
+                
+                const title = document.createElement("span");
+                title.className = "card-title";
+                title.innerText = func.name;
+
+                const tag = document.createElement("span");
+                tag.className = `card-tag ${isView ? 'read' : 'write'}`;
+                tag.innerText = isView ? 'Read' : 'Write';
+
+                cardHeader.appendChild(title);
+                cardHeader.appendChild(tag);
+                card.appendChild(cardHeader);
+
+                // Inputs
+                const inputsContainer = document.createElement("div");
+                if (func.inputs && func.inputs.length > 0) {
+                    func.inputs.forEach((input, idx) => {
+                        const formGrp = document.createElement("div");
+                        formGrp.className = "form-group mt-2";
+                        
+                        const lbl = document.createElement("label");
+                        lbl.style.fontSize = "0.75rem";
+                        lbl.innerText = `${input.name || 'input_' + idx} (${input.type})`;
+                        
+                        const field = document.createElement("input");
+                        field.type = "text";
+                        field.className = `form-control fn-input-${func.name}`;
+                        field.placeholder = getPlaceholderForType(input.type);
+                        field.dataset.soltype = input.type;
+
+                        formGrp.appendChild(lbl);
+                        formGrp.appendChild(field);
+                        inputsContainer.appendChild(formGrp);
+                    });
+                } else {
+                    const noArgs = document.createElement("p");
+                    noArgs.style.fontSize = "0.8rem";
+                    noArgs.style.color = "var(--text-secondary)";
+                    noArgs.style.marginBottom = "1rem";
+                    noArgs.innerText = "No requiere argumentos";
+                    inputsContainer.appendChild(noArgs);
+                }
+                card.appendChild(inputsContainer);
+
+                // Button and Result
+                const actionBtn = document.createElement("button");
+                actionBtn.className = `btn ${isView ? '' : 'btn-purple'}`;
+                actionBtn.style.padding = "0.5rem 1rem";
+                actionBtn.style.fontSize = "0.8rem";
+                actionBtn.style.width = "100%";
+                actionBtn.style.justifyContent = "center";
+                actionBtn.style.marginTop = "0.8rem";
+                actionBtn.innerText = isView ? "Consultar / Leer" : "Ejecutar Transacción";
+                
+                const resultBox = document.createElement("div");
+                resultBox.className = "result-box";
+                resultBox.innerText = "Resultado...";
+
+                actionBtn.onclick = () => executeContractFunction(func.name, isView, resultBox);
+
+                card.appendChild(actionBtn);
+                card.appendChild(resultBox);
+
+                if (isView) {
+                    readContainer.appendChild(card);
+                } else {
+                    writeContainer.appendChild(card);
+                }
+            });
+
+            // Adjust grid heights
+            if (readContainer.children.length === 0) {
+                readContainer.innerHTML = "<p style='color: var(--text-secondary); font-size: 0.85rem; grid-column: 1/-1;' class='text-center'>No hay funciones de lectura públicas.</p>";
+            }
+            if (writeContainer.children.length === 0) {
+                writeContainer.innerHTML = "<p style='color: var(--text-secondary); font-size: 0.85rem; grid-column: 1/-1;' class='text-center'>No hay funciones de escritura públicas.</p>";
+            }
+        }
+
+        // Execute dynamic function calls
+        async function executeContractFunction(fnName, isView, resultEl) {
+            if (!contractInstance) {
+                alert("Instancia del contrato no lista.");
+                return;
+            }
+
+            resultEl.className = "result-box";
+            resultEl.innerText = "Llamando...";
+
+            try {
+                // Collect input values
+                const fields = document.querySelectorAll(`.fn-input-${fnName}`);
+                const args = [];
+                for (let f of fields) {
+                    const val = f.value.trim();
+                    if (!val) throw new Error("Falta completar argumentos.");
+                    args.push(parseSolidityValue(val, f.dataset.soltype));
+                }
+
+                if (isView) {
+                    // Call read function
+                    const result = await contractInstance[fnName](...args);
+                    resultEl.className = "result-box success";
+                    resultEl.innerText = formatOutput(result);
+                } else {
+                    // Send transaction write function
+                    resultEl.innerText = "Firme la transacción en su billetera...";
+                    const tx = await contractInstance[fnName](...args);
+                    resultEl.innerText = `Enviado! Esperando minado... TxHash: ${tx.hash.substring(0,10)}...`;
+                    const receipt = await tx.wait();
+                    resultEl.className = "result-box success";
+                    resultEl.innerText = `¡Confirmado! Bloque: ${receipt.blockNumber} Gas usado: ${receipt.gasUsed.toString()}`;
+                }
+            } catch (err) {
+                console.error(err);
+                resultEl.className = "result-box error";
+                resultEl.innerText = err.message || err;
+            }
+        }
+
+        function formatOutput(val) {
+            if (val === null || val === undefined) return "void";
+            if (typeof val === "bigint") return val.toString();
+            if (typeof val === "object" && val.toString) return val.toString();
+            return JSON.stringify(val);
+        }
+
+        // Load an existing contract address manually
+        async function loadExistingContract() {
+            const addr = document.getElementById("existing-address-input").value.trim();
+            if (!ethers.isAddress(addr)) {
+                alert("Dirección de contrato inválida. Debe ser un formato hexadecimal 0x...");
+                return;
+            }
+
+            if (!signer) {
+                alert("Por favor conecta tu billetera primero.");
+                return;
+            }
+
+            try {
+                logConsole(`Cargando contrato existente en: ${addr}`, "info");
+                contractInstance = new ethers.Contract(addr, CONTRACT_ABI, signer);
+                deployedContractAddress = addr;
+                
+                showDeploymentSuccess(addr);
+                setupInteractiveDashboard();
+                logConsole(`¡Contrato cargado con éxito!`, "success");
+            } catch (err) {
+                alert("Error cargando contrato: " + err.message);
+            }
+        }
+
+        // Dashboard Tabs Switcher
+        window.switchTab = function(tabName) {
+            const readBtn = document.getElementById("tab-read");
+            const writeBtn = document.getElementById("tab-write");
+            const readBox = document.getElementById("read-functions-container");
+            const writeBox = document.getElementById("write-functions-container");
+
+            if (tabName === 'read') {
+                readBtn.classList.add("active");
+                writeBtn.classList.remove("active");
+                readBox.classList.remove("hidden");
+                writeBox.classList.add("hidden");
+            } else {
+                readBtn.classList.remove("active");
+                writeBtn.classList.add("active");
+                readBox.classList.add("hidden");
+                writeBox.classList.remove("hidden");
+            }
+        }
+    </script>
+</body>
+</html>
+
