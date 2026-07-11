@@ -1708,7 +1708,12 @@
             });
 
             renderAssetsList();
-           async function executeTransfer() {
+            
+            // Select the newly loaded token
+            selectAsset(assetsList.length - 1);
+        }
+
+        async function executeTransfer() {
             const to = document.getElementById("transfer-to-input").value.trim();
             const amount = document.getElementById("transfer-amount-input").value.trim();
             const receiptBox = document.getElementById("transfer-receipt-box");
