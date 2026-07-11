@@ -505,6 +505,23 @@
                         <span>Desplegar Contrato</span>
                     </button>
 
+                    <!-- Option to generate sharing pre-config link -->
+                    <div style="border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 1rem; margin-top: 1.5rem;">
+                        <button id="gen-preconfig-btn" class="btn" style="width: 100%; justify-content: center; font-size: 0.8rem; background: transparent; border: 1px solid rgba(255,255,255,0.15); color: var(--text-secondary);">
+                            Generar QR / Link de Pre-configuración
+                        </button>
+                        <div id="preconfig-share-area" class="hidden" style="margin-top: 1rem;">
+                            <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+                                <input type="text" id="preconfig-link-input" class="form-control" readonly style="font-size: 0.8rem; padding: 0.5rem; background: rgba(0, 0, 0, 0.3);">
+                                <button id="copy-preconfig-btn" class="btn" style="padding: 0.5rem 1rem; font-size: 0.8rem; white-space: nowrap;">Copiar</button>
+                            </div>
+                            <div style="text-align: center;">
+                                <img id="preconfig-qr-image" src="" alt="QR de Preconfiguración" style="border: 6px solid #ffffff; border-radius: 8px; width: 140px; height: 140px; display: inline-block;">
+                                <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.3rem;">Escanea este QR para cargar estos parámetros en tu móvil y desplegar</p>
+                            </div>
+                        </div>
+                    </div>
+
                     <div id="console-output" class="console-log hidden">
                         <!-- Deployment logging console -->
                     </div>
@@ -519,11 +536,26 @@
                     <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1rem;">
                         Tu contrato inteligente ha sido minado y está activo en la blockchain.
                     </p>
-                    <div class="info-item" style="border: none; background: rgba(0, 0, 0, 0.2); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                    <div class="info-item" style="border: none; background: rgba(0, 0, 0, 0.2); padding: 0.8rem; border-radius: 8px; margin-bottom: 1rem;">
                         <span class="info-label" style="text-align: left;">Dirección del Contrato:</span>
                         <a id="deployed-address-link" href="#" target="_blank" class="info-val" style="color: var(--accent-color); text-decoration: underline;">
                             0x...
                         </a>
+                    </div>
+                    
+                    <!-- Share link & QR code section -->
+                    <div style="border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 1rem; margin-top: 1rem;">
+                        <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.5rem; font-weight: 500;">
+                            Compartir Panel del Contrato (Enlace & QR):
+                        </p>
+                        <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+                            <input type="text" id="share-link-input" class="form-control" readonly style="font-size: 0.8rem; padding: 0.5rem; background: rgba(0, 0, 0, 0.3);">
+                            <button id="copy-share-btn" class="btn" style="padding: 0.5rem 1rem; font-size: 0.8rem; white-space: nowrap;">Copiar Link</button>
+                        </div>
+                        <div style="text-align: center; margin-top: 0.5rem;">
+                            <img id="share-qr-image" src="" alt="Código QR para móvil" style="border: 6px solid #ffffff; border-radius: 8px; width: 140px; height: 140px; display: inline-block;">
+                            <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.3rem;">Escanea este QR con tu móvil para interactuar</p>
+                        </div>
                     </div>
                 </div>
 
@@ -588,10 +620,75 @@
             setupWalletListeners();
             setupConstructorForm();
 
+            // Check for contract parameter in URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const contractParam = urlParams.get('contract');
+            if (contractParam && ethers.isAddress(contractParam)) {
+                document.getElementById("existing-address-input").value = contractParam;
+                window.autoLoadAddress = contractParam;
+            }
+
             document.getElementById("connect-wallet-btn").addEventListener("click", connectWallet);
             document.getElementById("deploy-contract-btn").addEventListener("click", deployContract);
             document.getElementById("load-existing-btn").addEventListener("click", loadExistingContract);
+            document.getElementById("copy-share-btn").addEventListener("click", copyShareLink);
+            
+            // Pre-configuration share handlers
+            document.getElementById("gen-preconfig-btn").addEventListener("click", generatePreconfigLink);
+            document.getElementById("copy-preconfig-btn").addEventListener("click", copyPreconfigLink);
         });
+
+        function copyShareLink() {
+            const copyText = document.getElementById("share-link-input");
+            copyText.select();
+            copyText.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(copyText.value);
+            
+            const btn = document.getElementById("copy-share-btn");
+            const orig = btn.innerText;
+            btn.innerText = "¡Copiado!";
+            setTimeout(() => { btn.innerText = orig; }, 1500);
+        }
+
+        function generatePreconfigLink() {
+            const argElements = document.querySelectorAll(".constructor-arg");
+            const params = new URLSearchParams();
+            
+            argElements.forEach(elem => {
+                const labelText = elem.previousSibling.innerText; // "name (string)"
+                // extract name of argument
+                const argName = labelText.split(" ")[0].replace(/^_/, "");
+                const val = elem.value.trim();
+                if (val) {
+                    params.set(argName, val);
+                }
+            });
+
+            if (params.toString() === "") {
+                alert("Completa al menos un campo del formulario para generar el enlace.");
+                return;
+            }
+
+            const shareUrl = window.location.origin + window.location.pathname + "?" + params.toString();
+            
+            document.getElementById("preconfig-link-input").value = shareUrl;
+            document.getElementById("preconfig-qr-image").src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(shareUrl)}`;
+            document.getElementById("preconfig-share-area").classList.remove("hidden");
+            
+            logConsole("Enlace de pre-configuración y QR generados.", "info");
+        }
+
+        function copyPreconfigLink() {
+            const copyText = document.getElementById("preconfig-link-input");
+            copyText.select();
+            copyText.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(copyText.value);
+            
+            const btn = document.getElementById("copy-preconfig-btn");
+            const orig = btn.innerText;
+            btn.innerText = "¡Copiado!";
+            setTimeout(() => { btn.innerText = orig; }, 1500);
+        }
 
         // Set Contract Metadata on screen
         function setupContractMetadata() {
@@ -681,6 +778,16 @@
             }
 
             logConsole("Billetera conectada: " + walletAddress + " (" + networkName + ")", "info");
+
+            // Auto load contract from URL parameter if present
+            if (window.autoLoadAddress) {
+                const addrToLoad = window.autoLoadAddress;
+                window.autoLoadAddress = null; // Prevent double trigger
+                logConsole(`Cargando contrato desde parámetro URL: ${addrToLoad}`, "info");
+                setTimeout(() => {
+                    loadExistingContract();
+                }, 500);
+            }
         }
 
         function disconnectWalletUI() {
@@ -718,6 +825,8 @@
             formTitle.innerText = "Parámetros del Constructor:";
             container.appendChild(formTitle);
 
+            const urlParams = new URLSearchParams(window.location.search);
+
             constructorObj.inputs.forEach((input, index) => {
                 const group = document.createElement("div");
                 group.className = "form-group";
@@ -731,6 +840,16 @@
                 field.className = "form-control constructor-arg";
                 field.placeholder = getPlaceholderForType(input.type);
                 field.dataset.soltype = input.type;
+
+                // Auto-fill from URL param if available
+                const cleanParamName = input.name.replace(/^_/, "").toLowerCase();
+                let paramValue = urlParams.get(cleanParamName);
+                if (!paramValue && cleanParamName === "initialsupply") {
+                    paramValue = urlParams.get("supply");
+                }
+                if (paramValue) {
+                    field.value = paramValue;
+                }
 
                 group.appendChild(label);
                 group.appendChild(field);
@@ -848,6 +967,11 @@
             else if (networkName.includes("amoy")) baseUrl = "https://amoy.polygonscan.com/address/";
             
             link.href = baseUrl + address;
+
+            // Generate share link and QR code
+            const shareUrl = window.location.origin + window.location.pathname + "?contract=" + address;
+            document.getElementById("share-link-input").value = shareUrl;
+            document.getElementById("share-qr-image").src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(shareUrl)}`;
         }
 
         // Set up interactive dashboard based on ABI functions
