@@ -9,8 +9,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Ethers.js CDN -->
+    <!-- Ethers.js CDN & WalletConnect Provider CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.10.0/dist/index.umd.min.js"></script>
 
     <style>
         :root {
@@ -444,6 +445,61 @@
 </head>
 <body>
 
+    <!-- TERMS AND CONDITIONS MODAL -->
+    <div id="terms-modal" class="hidden" style="position: fixed; inset: 0; background: rgba(5,7,12,0.9); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 1rem; backdrop-filter: blur(10px);">
+        <div class="glass-panel" style="max-width: 500px; width: 100%; border-color: var(--accent-purple); margin-bottom: 0;">
+            <h2 class="panel-title" style="color: var(--accent-purple);">Términos y Condiciones</h2>
+            <div style="max-height: 250px; overflow-y: auto; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.5rem; padding: 0.8rem; background: rgba(0,0,0,0.3); border-radius: 8px; border: 1px solid var(--border-color);">
+                <p style="margin-bottom: 0.8rem; font-weight: bold; color: white;">CONTRATO DE SERVICIO Y TRANSFERENCIA DE VALORES</p>
+                <p style="margin-bottom: 0.8rem;">1. **Uso del Contrato:** Este panel interactúa directamente con un contrato inteligente desplegado en la blockchain. Toda interacción (lectura o escritura) es definitiva y se procesa de forma descentralizada.</p>
+                <p style="margin-bottom: 0.8rem;">2. **Responsabilidad de Fondos:** Usted es el único responsable de la seguridad de su billetera y de los tokens que transfiera o administre mediante este panel. El creador del panel no se hace responsable por errores de envío o pérdidas de gas.</p>
+                <p style="margin-bottom: 0.8rem;">3. **Redes Compatibles:** Asegúrese de estar en la misma red blockchain en la que fue desplegado el contrato inteligente antes de confirmar cualquier transacción.</p>
+                <p>4. **Aceptación:** Al pulsar el botón de continuación, usted acepta los términos de uso y autoriza a la aplicación web a solicitar firmas de transacción a su billetera conectada.</p>
+            </div>
+            
+            <label style="display: flex; align-items: flex-start; gap: 0.8rem; cursor: pointer; font-size: 0.85rem; margin-bottom: 1.5rem; user-select: none;">
+                <input type="checkbox" id="terms-checkbox" style="margin-top: 0.2rem; width: 16px; height: 16px; accent-color: var(--accent-purple);">
+                <span>He leído y acepto los términos y condiciones de uso para interactuar con este contrato inteligente.</span>
+            </label>
+            
+            <button id="accept-terms-btn" class="btn btn-purple" style="width: 100%; justify-content: center;" disabled>
+                Aceptar y Conectar Billetera
+            </button>
+        </div>
+    </div>
+
+    <!-- WALLET SELECTOR MODAL -->
+    <div id="wallet-selector-modal" class="hidden" style="position: fixed; inset: 0; background: rgba(5,7,12,0.85); z-index: 9998; display: flex; align-items: center; justify-content: center; padding: 1rem; backdrop-filter: blur(8px);">
+        <div class="glass-panel" style="max-width: 400px; width: 100%; margin-bottom: 0;">
+            <h2 class="panel-title">Conectar Billetera</h2>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.5rem;">
+                Selecciona cómo deseas conectar tu billetera a la aplicación web:
+            </p>
+            
+            <div style="display: flex; flex-direction: column; gap: 0.8rem;">
+                <button id="select-injected-btn" class="btn" style="width: 100%; justify-content: flex-start; padding: 1rem; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); color: white;">
+                    <span style="font-size: 1.2rem; margin-right: 0.5rem;">🔌</span>
+                    <div style="text-align: left;">
+                        <div style="font-weight: 600; font-size: 0.9rem;">Billetera del Navegador</div>
+                        <div style="font-size: 0.75rem; color: var(--text-secondary);">Para extensiones (MetaMask, Trust Wallet) o navegadores in-app móviles</div>
+                    </div>
+                </button>
+                
+                <button id="select-walletconnect-btn" class="btn btn-purple" style="width: 100%; justify-content: flex-start; padding: 1rem; border-radius: 12px;">
+                    <span style="font-size: 1.2rem; margin-right: 0.5rem;">🌐</span>
+                    <div style="text-align: left;">
+                        <div style="font-weight: 600; font-size: 0.9rem;">WalletConnect (QR / Móvil)</div>
+                        <div style="font-size: 0.75rem; color: #ddd6fe;">Escanea un código QR o conéctate directo a tu app móvil de Trust Wallet</div>
+                    </div>
+                </button>
+            </div>
+            
+            <button id="close-wallet-selector-btn" class="btn" style="width: 100%; justify-content: center; margin-top: 1.5rem; background: transparent; box-shadow: none; border: none; color: var(--text-secondary); font-size: 0.85rem;">
+                Cancelar
+            </button>
+        </div>
+    </div>
+
     <div class="container">
         <!-- HEADER -->
         <header>
@@ -626,6 +682,8 @@
             if (contractParam && ethers.isAddress(contractParam)) {
                 document.getElementById("existing-address-input").value = contractParam;
                 window.autoLoadAddress = contractParam;
+                // Show Terms Modal!
+                showTermsModal();
             }
 
             document.getElementById("connect-wallet-btn").addEventListener("click", connectWallet);
@@ -636,7 +694,37 @@
             // Pre-configuration share handlers
             document.getElementById("gen-preconfig-btn").addEventListener("click", generatePreconfigLink);
             document.getElementById("copy-preconfig-btn").addEventListener("click", copyPreconfigLink);
+
+            // Terms checkboxes and accept button listeners
+            document.getElementById("terms-checkbox").addEventListener("change", (e) => {
+                document.getElementById("accept-terms-btn").disabled = !e.target.checked;
+            });
+            document.getElementById("accept-terms-btn").addEventListener("click", () => {
+                document.getElementById("terms-modal").classList.add("hidden");
+                showWalletSelector();
+            });
+
+            // Wallet selector listeners
+            document.getElementById("close-wallet-selector-btn").addEventListener("click", () => {
+                document.getElementById("wallet-selector-modal").classList.add("hidden");
+            });
+            document.getElementById("select-injected-btn").addEventListener("click", () => {
+                document.getElementById("wallet-selector-modal").classList.add("hidden");
+                connectWallet("injected");
+            });
+            document.getElementById("select-walletconnect-btn").addEventListener("click", () => {
+                document.getElementById("wallet-selector-modal").classList.add("hidden");
+                connectWallet("walletconnect");
+            });
         });
+
+        function showTermsModal() {
+            document.getElementById("terms-modal").classList.remove("hidden");
+        }
+
+        function showWalletSelector() {
+            document.getElementById("wallet-selector-modal").classList.remove("hidden");
+        }
 
         function copyShareLink() {
             const copyText = document.getElementById("share-link-input");
@@ -730,22 +818,59 @@
             }
         }
 
+        // WalletConnect Project ID constant
+        const WALLETCONNECT_PROJECT_ID = "YOUR_WALLETCONNECT_PROJECT_ID"; // Reemplázalo con tu Project ID de cloud.walletconnect.com
+
         // Connect Wallet Function
-        async function connectWallet() {
-            if (!window.ethereum) {
-                alert("Por favor, instala la extensión de Trust Wallet o MetaMask en tu navegador.");
+        async function connectWallet(type = "injected") {
+            // If called directly without arguments (e.g. from header button click)
+            if (typeof type === "object") {
+                showWalletSelector();
                 return;
             }
 
             try {
-                logConsole("Conectando con la billetera...", "info");
-                provider = new ethers.BrowserProvider(window.ethereum);
+                let providerInstance;
+                if (type === "walletconnect") {
+                    if (WALLETCONNECT_PROJECT_ID === "YOUR_WALLETCONNECT_PROJECT_ID" || !WALLETCONNECT_PROJECT_ID) {
+                        logConsole("Error: Se requiere un WalletConnect Project ID. Regístrate gratis en cloud.walletconnect.com y agrégalo en index_template.html", "error");
+                        alert("Error: Se requiere configurar un Project ID de WalletConnect en el código para esta conexión.");
+                        return;
+                    }
+                    
+                    logConsole("Iniciando WalletConnect...", "info");
+                    
+                    // Initialize WalletConnect Provider
+                    const wcProvider = await WalletConnectEthereumProvider.init({
+                        projectId: WALLETCONNECT_PROJECT_ID,
+                        chains: [1, 11155111, 137, 80002], // Mainnet, Sepolia, Polygon, Amoy
+                        showQrModal: true
+                    });
+
+                    logConsole("Esperando conexión QR / Selección de billetera...", "info");
+                    await wcProvider.enable();
+                    providerInstance = wcProvider;
+
+                    // Monitor disconnect
+                    wcProvider.on("disconnect", () => {
+                        disconnectWalletUI();
+                    });
+                } else {
+                    if (!window.ethereum) {
+                        alert("No se detectó billetera del navegador. Si estás en móvil, por favor usa WalletConnect o abre la página dentro del navegador de Trust Wallet/MetaMask.");
+                        return;
+                    }
+                    logConsole("Conectando con billetera del navegador...", "info");
+                    providerInstance = window.ethereum;
+                }
+
+                provider = new ethers.BrowserProvider(providerInstance);
                 const accounts = await provider.send("eth_requestAccounts", []);
                 signer = await provider.getSigner();
                 await handleNewAccounts(accounts);
             } catch (error) {
                 console.error(error);
-                logConsole("Conexión de billetera rechazada por el usuario: " + error.message, "error");
+                logConsole("Error al conectar billetera: " + (error.message || error), "error");
             }
         }
 
