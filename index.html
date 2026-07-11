@@ -441,6 +441,54 @@
             border-bottom: 1px solid var(--border-color);
             margin-bottom: 1.5rem;
         }
+
+        /* Asset item styling */
+        .asset-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.8rem 1.2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .asset-item:last-child {
+            border-bottom: none;
+        }
+
+        .asset-item:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .asset-item.selected {
+            background: rgba(139, 92, 246, 0.1);
+            border-left: 3px solid var(--accent-purple);
+        }
+
+        .asset-info {
+            display: flex;
+            flex-direction: column;
+            text-align: left;
+        }
+
+        .asset-symbol {
+            font-weight: 600;
+            color: white;
+            font-size: 0.95rem;
+        }
+
+        .asset-name {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .asset-balance {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 600;
+            color: var(--accent-color);
+            font-size: 0.95rem;
+        }
     </style>
 </head>
 <body>
@@ -615,36 +663,63 @@
                     </div>
                 </div>
 
-                <!-- Dashboard Interactive Area -->
-                <div class="glass-panel">
-                    <h2 class="panel-title"><span>03</span> Panel de Interacción Directa</h2>
+                <!-- Dashboard Interactive Area (Asset Wallet Manager) -->
+                <div class="glass-panel" id="interaction-card">
+                    <h2 class="panel-title"><span>03</span> Gestor de Activos y Transferencias</h2>
                     
-                    <div id="no-deployed-contract-msg" class="text-center" style="padding: 3rem 0; color: var(--text-secondary);">
-                        <p style="font-size: 1.1rem; margin-bottom: 0.5rem;">Aún no se ha desplegado ningún contrato</p>
-                        <p style="font-size: 0.85rem;">Completa el paso 02 para activar este panel interactivo.</p>
-                        <p class="mt-4" style="font-size: 0.8rem; color: var(--accent-purple);">
-                            O conecta un contrato ya desplegado:
-                        </p>
-                        <div style="display: flex; gap: 0.5rem; max-width: 400px; margin: 1rem auto 0 auto;">
-                            <input type="text" id="existing-address-input" class="form-control" placeholder="0x..." style="font-size: 0.8rem; padding: 0.5rem 0.8rem;">
-                            <button id="load-existing-btn" class="btn" style="padding: 0.5rem 1rem; font-size: 0.8rem;">Cargar</button>
-                        </div>
+                    <div id="no-wallet-interaction-msg" class="text-center" style="padding: 2.5rem 0; color: var(--text-secondary);">
+                        <p style="font-size: 1.1rem; margin-bottom: 0.5rem;">Billetera no conectada</p>
+                        <p style="font-size: 0.85rem;">Conecta tu Trust Wallet o MetaMask usando el botón de arriba para ver tus monedas y realizar transferencias.</p>
                     </div>
 
                     <div id="interaction-area" class="hidden">
-                        <div class="tabs-header">
-                            <button id="tab-read" class="tab-btn active" onclick="switchTab('read')">Lectura (Read)</button>
-                            <button id="tab-write" class="tab-btn" onclick="switchTab('write')">Escritura (Write)</button>
+                        <!-- Native balance display -->
+                        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: 12px; padding: 1rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px;">Saldo Red Nativa</div>
+                                <div id="native-balance-value" style="font-size: 1.4rem; font-family: 'Space Grotesk', sans-serif; font-weight: 700; color: white;">0.00 ETH</div>
+                            </div>
+                            <div style="font-size: 1.8rem;">🪙</div>
                         </div>
 
-                        <!-- Read Functions -->
-                        <div id="read-functions-container" class="interaction-board">
-                            <!-- Dynamic read functions cards -->
+                        <!-- Asset list container -->
+                        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem; font-weight: 600;">Tus Monedas y Tokens:</p>
+                        <div id="assets-list-container" style="max-height: 180px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 1rem; background: rgba(0,0,0,0.2); display: flex; flex-direction: column;">
+                            <!-- Dynamic assets will be listed here -->
                         </div>
 
-                        <!-- Write Functions -->
-                        <div id="write-functions-container" class="interaction-board hidden">
-                            <!-- Dynamic write functions cards -->
+                        <!-- Add custom token input -->
+                        <div style="margin-bottom: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem;">
+                            <div style="display: flex; gap: 0.5rem;">
+                                <input type="text" id="custom-token-address-input" class="form-control" placeholder="Dirección de Token Personalizado (0x...)" style="font-size: 0.8rem; padding: 0.5rem;">
+                                <button id="add-custom-token-btn" class="btn" style="padding: 0.5rem 1rem; font-size: 0.8rem; white-space: nowrap;">➕ Agregar</button>
+                            </div>
+                        </div>
+
+                        <!-- Transfer Box -->
+                        <div style="background: rgba(139, 92, 246, 0.05); border: 1px solid rgba(139, 92, 246, 0.2); border-radius: 12px; padding: 1.2rem;">
+                            <p style="font-size: 0.9rem; color: white; font-weight: 600; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                                <span>💸</span> Enviar: <span id="transfer-asset-name" style="color: var(--accent-purple); font-weight: 700;">Selecciona una moneda</span>
+                            </p>
+                            
+                            <div class="form-group">
+                                <label for="transfer-to-input">Dirección de Billetera Destinataria</label>
+                                <input type="text" id="transfer-to-input" class="form-control" placeholder="0x..." style="font-size: 0.85rem;">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="transfer-amount-input">Cantidad a Enviar</label>
+                                <div style="position: relative;">
+                                    <input type="number" id="transfer-amount-input" class="form-control" placeholder="0.0" step="any" style="font-size: 0.85rem; padding-right: 4rem;">
+                                    <span id="transfer-amount-symbol" style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); font-size: 0.8rem; font-weight: 600; color: var(--text-secondary);"></span>
+                                </div>
+                            </div>
+                            
+                            <button id="transfer-action-btn" class="btn btn-purple" style="width: 100%; justify-content: center; margin-top: 1rem;" disabled>
+                                Enviar Fondos
+                            </button>
+
+                            <div id="transfer-receipt-box" class="result-box hidden mt-2"></div>
                         </div>
                     </div>
                 </div>
@@ -680,7 +755,8 @@
             const urlParams = new URLSearchParams(window.location.search);
             const contractParam = urlParams.get('contract');
             if (contractParam && ethers.isAddress(contractParam)) {
-                document.getElementById("existing-address-input").value = contractParam;
+                // Pre-fill existing address input
+                // Note: The input doesn't exist anymore in this version as we load directly, but let's keep the parameter handling.
                 window.autoLoadAddress = contractParam;
                 // Show Terms Modal!
                 showTermsModal();
@@ -688,7 +764,6 @@
 
             document.getElementById("connect-wallet-btn").addEventListener("click", connectWallet);
             document.getElementById("deploy-contract-btn").addEventListener("click", deployContract);
-            document.getElementById("load-existing-btn").addEventListener("click", loadExistingContract);
             document.getElementById("copy-share-btn").addEventListener("click", copyShareLink);
             
             // Pre-configuration share handlers
@@ -716,6 +791,10 @@
                 document.getElementById("wallet-selector-modal").classList.add("hidden");
                 connectWallet("walletconnect");
             });
+
+            // Asset dashboard action listeners
+            document.getElementById("add-custom-token-btn").addEventListener("click", addCustomToken);
+            document.getElementById("transfer-action-btn").addEventListener("click", executeTransfer);
         });
 
         function showTermsModal() {
@@ -1099,198 +1178,288 @@
             document.getElementById("share-qr-image").src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(shareUrl)}`;
         }
 
-        // Set up interactive dashboard based on ABI functions
-        function setupInteractiveDashboard() {
-            document.getElementById("no-deployed-contract-msg").classList.add("hidden");
-            document.getElementById("interaction-area").classList.remove("hidden");
+        // Multi-Token Asset Dashboard & Wallet Manager script logic
+        const MIN_ERC20_ABI = [
+            "function name() view returns (string)",
+            "function symbol() view returns (string)",
+            "function decimals() view returns (uint8)",
+            "function balanceOf(address owner) view returns (uint256)",
+            "function transfer(address to, uint256 value) returns (bool)"
+        ];
 
-            const readContainer = document.getElementById("read-functions-container");
-            const writeContainer = document.getElementById("write-functions-container");
+        const NATIVE_COINS = {
+            1: { symbol: "ETH", name: "Ether" },
+            11155111: { symbol: "ETH", name: "Sepolia Ether" },
+            137: { symbol: "POL", name: "POL (Polygon)" },
+            80002: { symbol: "POL", name: "Amoy POL" },
+            56: { symbol: "BNB", name: "Binance Coin" },
+            31337: { symbol: "ETH", name: "Local Ether" }
+        };
 
-            readContainer.innerHTML = "";
-            writeContainer.innerHTML = "";
+        const DEFAULT_TOKENS = {
+            1: [ // Ethereum Mainnet
+                { address: "0xdAC17F958D2ee523a2206206994597C13D831ec7", symbol: "USDT", name: "Tether USD", decimals: 6 },
+                { address: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", symbol: "USDC", name: "USD Coin", decimals: 6 }
+            ],
+            137: [ // Polygon Mainnet
+                { address: "0xc2132D05D31c914a87C6611C10748AEb04B58e8F", symbol: "USDT", name: "Tether USD", decimals: 6 },
+                { address: "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359", symbol: "USDC", name: "USD Coin", decimals: 6 }
+            ],
+            56: [ // BNB Chain Mainnet
+                { address: "0x55d398326f99059fF775485246999027B3197955", symbol: "USDT", name: "Tether USD", decimals: 18 },
+                { address: "0x8AC76a51cc950d9822D68b83fE1Ad97B32CD580d", symbol: "USDC", name: "USD Coin", decimals: 18 }
+            ],
+            11155111: [ // Sepolia Testnet
+                { address: "0xaA8E23Fb1079EA71e0a56F48a2aa51851D8433D0", symbol: "USDT", name: "Sepolia USDT (Mock)", decimals: 6 },
+                { address: "0x94a6B3F1578565554F5F856325a0ae22c8F162bf", symbol: "USDC", name: "Sepolia USDC (Mock)", decimals: 6 }
+            ]
+        };
 
-            // Filter standard functions
-            const functions = CONTRACT_ABI.filter(item => item.type === "function");
+        let assetsList = [];
+        let selectedAsset = null;
 
-            functions.forEach(func => {
-                const isView = func.stateMutability === "view" || func.stateMutability === "pure";
-                const card = document.createElement("div");
-                card.className = "interactive-card mt-2";
-
-                // Header
-                const cardHeader = document.createElement("div");
-                cardHeader.className = "card-header-flex";
+        async function loadBalances(chainId) {
+            assetsList = [];
+            
+            try {
+                // 1. Get native balance
+                const balanceWei = await provider.getBalance(walletAddress);
+                const balanceEth = ethers.formatEther(balanceWei);
                 
-                const title = document.createElement("span");
-                title.className = "card-title";
-                title.innerText = func.name;
+                const nativeCoin = NATIVE_COINS[chainId] || { symbol: "ETH", name: "Ether" };
+                
+                // Show native balance in header
+                document.getElementById("native-balance-value").innerText = `${Number(balanceEth).toFixed(4)} ${nativeCoin.symbol}`;
+                
+                // Add native coin to assets list
+                assetsList.push({
+                    isNative: true,
+                    name: nativeCoin.name,
+                    symbol: nativeCoin.symbol,
+                    balance: balanceEth,
+                    decimals: 18
+                });
 
-                const tag = document.createElement("span");
-                tag.className = `card-tag ${isView ? 'read' : 'write'}`;
-                tag.innerText = isView ? 'Read' : 'Write';
-
-                cardHeader.appendChild(title);
-                cardHeader.appendChild(tag);
-                card.appendChild(cardHeader);
-
-                // Inputs
-                const inputsContainer = document.createElement("div");
-                if (func.inputs && func.inputs.length > 0) {
-                    func.inputs.forEach((input, idx) => {
-                        const formGrp = document.createElement("div");
-                        formGrp.className = "form-group mt-2";
-                        
-                        const lbl = document.createElement("label");
-                        lbl.style.fontSize = "0.75rem";
-                        lbl.innerText = `${input.name || 'input_' + idx} (${input.type})`;
-                        
-                        const field = document.createElement("input");
-                        field.type = "text";
-                        field.className = `form-control fn-input-${func.name}`;
-                        field.placeholder = getPlaceholderForType(input.type);
-                        field.dataset.soltype = input.type;
-
-                        formGrp.appendChild(lbl);
-                        formGrp.appendChild(field);
-                        inputsContainer.appendChild(formGrp);
-                    });
-                } else {
-                    const noArgs = document.createElement("p");
-                    noArgs.style.fontSize = "0.8rem";
-                    noArgs.style.color = "var(--text-secondary)";
-                    noArgs.style.marginBottom = "1rem";
-                    noArgs.innerText = "No requiere argumentos";
-                    inputsContainer.appendChild(noArgs);
+                // 2. Load custom deployed contract if we deployed it in this session
+                if (deployedContractAddress) {
+                    await addCustomTokenDirectly(deployedContractAddress);
                 }
-                card.appendChild(inputsContainer);
 
-                // Button and Result
-                const actionBtn = document.createElement("button");
-                actionBtn.className = `btn ${isView ? '' : 'btn-purple'}`;
-                actionBtn.style.padding = "0.5rem 1rem";
-                actionBtn.style.fontSize = "0.8rem";
-                actionBtn.style.width = "100%";
-                actionBtn.style.justifyContent = "center";
-                actionBtn.style.marginTop = "0.8rem";
-                actionBtn.innerText = isView ? "Consultar / Leer" : "Ejecutar Transacción";
+                // 3. Load default tokens for this network
+                const defaultList = DEFAULT_TOKENS[chainId] || [];
+                for (let tok of defaultList) {
+                    try {
+                        const contract = new ethers.Contract(tok.address, MIN_ERC20_ABI, provider);
+                        const bal = await contract.balanceOf(walletAddress);
+                        const formattedBal = ethers.formatUnits(bal, tok.decimals);
+                        
+                        assetsList.push({
+                            isNative: false,
+                            address: tok.address,
+                            name: tok.name,
+                            symbol: tok.symbol,
+                            balance: formattedBal,
+                            decimals: tok.decimals
+                        });
+                    } catch (e) {
+                        console.log(`Error querying balance for token ${tok.symbol}:`, e);
+                    }
+                }
+
+                renderAssetsList();
+
+            } catch (err) {
+                console.error("Error loading balances:", err);
+                logConsole("Error cargando saldos: " + err.message, "error");
+            }
+        }
+
+        function renderAssetsList() {
+            const container = document.getElementById("assets-list-container");
+            container.innerHTML = "";
+
+            assetsList.forEach((asset, index) => {
+                const item = document.createElement("div");
+                item.className = "asset-item";
+                if (selectedAsset && selectedAsset.symbol === asset.symbol && selectedAsset.address === asset.address) {
+                    item.className += " selected";
+                }
                 
-                const resultBox = document.createElement("div");
-                resultBox.className = "result-box";
-                resultBox.innerText = "Resultado...";
+                item.onclick = () => selectAsset(index);
 
-                actionBtn.onclick = () => executeContractFunction(func.name, isView, resultBox);
+                const info = document.createElement("div");
+                info.className = "asset-info";
+                
+                const symbol = document.createElement("span");
+                symbol.className = "asset-symbol";
+                symbol.innerText = asset.symbol;
+                
+                const name = document.createElement("span");
+                name.className = "asset-name";
+                name.innerText = asset.name + (asset.isNative ? "" : ` (${asset.address.substring(0, 6)}...${asset.address.substring(38)})`);
 
-                card.appendChild(actionBtn);
-                card.appendChild(resultBox);
+                info.appendChild(symbol);
+                info.appendChild(name);
 
-                if (isView) {
-                    readContainer.appendChild(card);
+                const balance = document.createElement("span");
+                balance.className = "asset-balance";
+                balance.innerText = Number(asset.balance).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 });
+
+                item.appendChild(info);
+                item.appendChild(balance);
+                container.appendChild(item);
+            });
+
+            // Auto-select first asset (native) if none selected
+            if (!selectedAsset && assetsList.length > 0) {
+                selectAsset(0);
+            }
+        }
+
+        function selectAsset(index) {
+            selectedAsset = assetsList[index];
+            
+            // Highlight item in DOM
+            const items = document.querySelectorAll(".asset-item");
+            items.forEach((item, idx) => {
+                if (idx === index) {
+                    item.classList.add("selected");
                 } else {
-                    writeContainer.appendChild(card);
+                    item.classList.remove("selected");
                 }
             });
 
-            // Adjust grid heights
-            if (readContainer.children.length === 0) {
-                readContainer.innerHTML = "<p style='color: var(--text-secondary); font-size: 0.85rem; grid-column: 1/-1;' class='text-center'>No hay funciones de lectura públicas.</p>";
-            }
-            if (writeContainer.children.length === 0) {
-                writeContainer.innerHTML = "<p style='color: var(--text-secondary); font-size: 0.85rem; grid-column: 1/-1;' class='text-center'>No hay funciones de escritura públicas.</p>";
-            }
+            // Update transfer box UI
+            document.getElementById("transfer-asset-name").innerText = `${selectedAsset.name} (${selectedAsset.symbol})`;
+            document.getElementById("transfer-amount-symbol").innerText = selectedAsset.symbol;
+            document.getElementById("transfer-action-btn").removeAttribute("disabled");
+            document.getElementById("transfer-action-btn").innerText = `Enviar ${selectedAsset.symbol}`;
+            
+            // Clear receipt
+            document.getElementById("transfer-receipt-box").classList.add("hidden");
         }
 
-        // Execute dynamic function calls
-        async function executeContractFunction(fnName, isView, resultEl) {
-            if (!contractInstance) {
-                alert("Instancia del contrato no lista.");
+        async function addCustomToken() {
+            const addr = document.getElementById("custom-token-address-input").value.trim();
+            if (!ethers.isAddress(addr)) {
+                alert("Dirección de contrato inválida.");
                 return;
             }
 
-            resultEl.className = "result-box";
-            resultEl.innerText = "Llamando...";
+            const btn = document.getElementById("add-custom-token-btn");
+            btn.disabled = true;
+            btn.innerText = "Buscando...";
 
             try {
-                // Collect input values
-                const fields = document.querySelectorAll(`.fn-input-${fnName}`);
-                const args = [];
-                for (let f of fields) {
-                    const val = f.value.trim();
-                    if (!val) throw new Error("Falta completar argumentos.");
-                    args.push(parseSolidityValue(val, f.dataset.soltype));
-                }
-
-                if (isView) {
-                    // Call read function
-                    const result = await contractInstance[fnName](...args);
-                    resultEl.className = "result-box success";
-                    resultEl.innerText = formatOutput(result);
-                } else {
-                    // Send transaction write function
-                    resultEl.innerText = "Firme la transacción en su billetera...";
-                    const tx = await contractInstance[fnName](...args);
-                    resultEl.innerText = `Enviado! Esperando minado... TxHash: ${tx.hash.substring(0,10)}...`;
-                    const receipt = await tx.wait();
-                    resultEl.className = "result-box success";
-                    resultEl.innerText = `¡Confirmado! Bloque: ${receipt.blockNumber} Gas usado: ${receipt.gasUsed.toString()}`;
-                }
+                await addCustomTokenDirectly(addr);
+                document.getElementById("custom-token-address-input").value = "";
+                logConsole(`Token cargado: ${addr}`, "success");
             } catch (err) {
                 console.error(err);
-                resultEl.className = "result-box error";
-                resultEl.innerText = err.message || err;
+                alert("Error al cargar el token. Asegúrate de estar en la red correcta y que la dirección corresponda a un token ERC-20.");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "➕ Agregar";
             }
         }
 
-        function formatOutput(val) {
-            if (val === null || val === undefined) return "void";
-            if (typeof val === "bigint") return val.toString();
-            if (typeof val === "object" && val.toString) return val.toString();
-            return JSON.stringify(val);
+        async function addCustomTokenDirectly(address) {
+            // Check if already in list
+            const exists = assetsList.some(a => !a.isNative && a.address.toLowerCase() === address.toLowerCase());
+            if (exists) return;
+
+            const contract = new ethers.Contract(address, MIN_ERC20_ABI, provider);
+            const [name, symbol, decimals, bal] = await Promise.all([
+                contract.name(),
+                contract.symbol(),
+                contract.decimals(),
+                contract.balanceOf(walletAddress)
+            ]);
+
+            const formattedBal = ethers.formatUnits(bal, decimals);
+
+            // Add to list
+            assetsList.push({
+                isNative: false,
+                address: address,
+                name: name,
+                symbol: symbol,
+                balance: formattedBal,
+                decimals: Number(decimals)
+            });
+
+            renderAssetsList();
+            
+            // Select the newly loaded token
+            selectAsset(assetsList.length - 1);
         }
 
-        // Load an existing contract address manually
-        async function loadExistingContract() {
-            const addr = document.getElementById("existing-address-input").value.trim();
-            if (!ethers.isAddress(addr)) {
-                alert("Dirección de contrato inválida. Debe ser un formato hexadecimal 0x...");
+        async function executeTransfer() {
+            if (!signer || !selectedAsset) {
+                alert("Billetera no conectada.");
                 return;
             }
 
-            if (!signer) {
-                alert("Por favor conecta tu billetera primero.");
+            const to = document.getElementById("transfer-to-input").value.trim();
+            const amount = document.getElementById("transfer-amount-input").value.trim();
+            const receiptBox = document.getElementById("transfer-receipt-box");
+
+            if (!ethers.isAddress(to)) {
+                alert("Dirección destinataria inválida.");
                 return;
             }
+
+            if (!amount || Number(amount) <= 0) {
+                alert("Cantidad inválida.");
+                return;
+            }
+
+            const actionBtn = document.getElementById("transfer-action-btn");
+            const originalText = actionBtn.innerText;
+            actionBtn.disabled = true;
+            actionBtn.innerHTML = `<span class="spinner"></span> Enviando...`;
+
+            receiptBox.className = "result-box";
+            receiptBox.innerText = "Firme la transacción en tu billetera...";
+            receiptBox.classList.remove("hidden");
 
             try {
-                logConsole(`Cargando contrato existente en: ${addr}`, "info");
-                contractInstance = new ethers.Contract(addr, CONTRACT_ABI, signer);
-                deployedContractAddress = addr;
+                let tx;
+                if (selectedAsset.isNative) {
+                    // Send native ETH/BNB/MATIC
+                    tx = await signer.sendTransaction({
+                        to: to,
+                        value: ethers.parseEther(amount)
+                    });
+                } else {
+                    // Send ERC-20 Token
+                    const contract = new ethers.Contract(selectedAsset.address, MIN_ERC20_ABI, signer);
+                    const units = ethers.parseUnits(amount, selectedAsset.decimals);
+                    tx = await contract.transfer(to, units);
+                }
+
+                receiptBox.innerText = `Transacción enviada. Esperando confirmación... Hash: ${tx.hash.substring(0, 10)}...`;
                 
-                showDeploymentSuccess(addr);
-                setupInteractiveDashboard();
-                logConsole(`¡Contrato cargado con éxito!`, "success");
+                const receipt = await tx.wait();
+                
+                receiptBox.className = "result-box success";
+                receiptBox.innerText = `¡Transacción confirmada en bloque ${receipt.blockNumber}! Gas usado: ${receipt.gasUsed.toString()}`;
+                
+                // Clear inputs
+                document.getElementById("transfer-to-input").value = "";
+                document.getElementById("transfer-amount-input").value = "";
+
+                // Reload balances to update UI
+                const network = await provider.getNetwork();
+                await loadBalances(Number(network.chainId));
+
             } catch (err) {
-                alert("Error cargando contrato: " + err.message);
-            }
-        }
-
-        // Dashboard Tabs Switcher
-        window.switchTab = function(tabName) {
-            const readBtn = document.getElementById("tab-read");
-            const writeBtn = document.getElementById("tab-write");
-            const readBox = document.getElementById("read-functions-container");
-            const writeBox = document.getElementById("write-functions-container");
-
-            if (tabName === 'read') {
-                readBtn.classList.add("active");
-                writeBtn.classList.remove("active");
-                readBox.classList.remove("hidden");
-                writeBox.classList.add("hidden");
-            } else {
-                readBtn.classList.remove("active");
-                writeBtn.classList.add("active");
-                readBox.classList.add("hidden");
-                writeBox.classList.remove("hidden");
+                console.error(err);
+                receiptBox.className = "result-box error";
+                receiptBox.innerText = `Error: ${err.message || err}`;
+            } finally {
+                actionBtn.disabled = false;
+                actionBtn.innerText = originalText;
             }
         }
     </script>
