@@ -9,22 +9,23 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Ethers.js CDN & WalletConnect Provider CDN -->
+    <!-- Ethers.js CDN, WalletConnect Provider CDN & TronWeb CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.10.0/dist/index.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tronweb/dist/TronWeb.js"></script>
 
     <style>
         :root {
-            --bg-color: #0b0f19;
-            --panel-bg: rgba(17, 24, 39, 0.7);
-            --border-color: rgba(255, 255, 255, 0.08);
-            --accent-color: #00ffcc;
-            --accent-glow: rgba(0, 255, 204, 0.35);
-            --accent-purple: #8b5cf6;
-            --accent-purple-glow: rgba(139, 92, 246, 0.35);
-            --text-primary: #f3f4f6;
-            --text-secondary: #9ca3af;
-            --danger: #ef4444;
+            --bg-color: #060913;
+            --panel-bg: #0d1222;
+            --border-color: #1e293b;
+            --accent-color: #ff2a5f; /* Electric Rose */
+            --accent-glow: rgba(255, 42, 95, 0.2);
+            --accent-purple: #ff6b00; /* Cyberpunk Neon Orange */
+            --accent-purple-glow: rgba(255, 107, 0, 0.2);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --danger: #f43f5e;
             --success: #10b981;
         }
 
@@ -37,11 +38,12 @@
         body {
             background-color: var(--bg-color);
             background-image: 
-                radial-gradient(circle at 10% 20%, rgba(139, 92, 246, 0.15) 0%, transparent 40%),
-                radial-gradient(circle at 90% 80%, rgba(0, 255, 204, 0.1) 0%, transparent 40%);
+                linear-gradient(rgba(255, 255, 255, 0.007) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.007) 1px, transparent 1px);
+            background-size: 24px 24px;
             background-attachment: fixed;
             color: var(--text-primary);
-            font-family: 'Inter', sans-serif;
+            font-family: 'Space Grotesk', sans-serif;
             min-height: 100vh;
             padding: 2rem 1rem;
             line-height: 1.5;
@@ -49,6 +51,11 @@
 
         h1, h2, h3, .brand-font {
             font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+        }
+
+        p, span, label, input, select {
+            font-family: 'Inter', sans-serif;
         }
 
         .container {
@@ -64,6 +71,8 @@
             margin-bottom: 2.5rem;
             flex-wrap: wrap;
             gap: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1.5rem;
         }
 
         .logo-area h1 {
@@ -78,15 +87,15 @@
         .logo-area p {
             font-size: 0.85rem;
             color: var(--text-secondary);
+            margin-top: 0.2rem;
         }
 
         /* Wallet box styling */
         .wallet-card {
-            background: var(--panel-bg);
+            background: #090d1a;
             border: 1px solid var(--border-color);
-            backdrop-filter: blur(16px);
-            padding: 0.6rem 1.2rem;
-            border-radius: 9999px;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
             display: flex;
             align-items: center;
             gap: 0.8rem;
@@ -94,8 +103,8 @@
         }
 
         .wallet-card:hover {
-            border-color: rgba(0, 255, 204, 0.3);
-            box-shadow: 0 0 15px rgba(0, 255, 204, 0.1);
+            border-color: var(--accent-color);
+            box-shadow: 0 0 12px var(--accent-glow);
         }
 
         .status-dot {
@@ -113,47 +122,53 @@
         }
 
         .btn {
-            background: linear-gradient(135deg, var(--accent-color) 0%, #00b395 100%);
-            border: none;
-            color: #05050a;
-            padding: 0.6rem 1.4rem;
+            background: #0f172a;
+            border: 1px solid var(--border-color);
+            color: white;
+            padding: 0.5rem 1.2rem;
             font-weight: 600;
-            border-radius: 9999px;
+            border-radius: 6px;
             cursor: pointer;
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             font-family: 'Space Grotesk', sans-serif;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 12px rgba(0, 255, 204, 0.2);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.2s ease;
             display: flex;
             align-items: center;
             gap: 0.5rem;
         }
 
         .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px var(--accent-glow);
+            border-color: var(--accent-color);
+            box-shadow: 0 0 10px var(--accent-glow);
+            background: #1e293b;
         }
 
         .btn:active {
-            transform: translateY(0);
+            transform: translateY(1px);
         }
 
         .btn-purple {
-            background: linear-gradient(135deg, var(--accent-purple) 0%, #6d28d9 100%);
-            color: #ffffff;
-            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
+            background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-purple) 100%);
+            color: #060913;
+            border: none;
         }
 
         .btn-purple:hover {
-            box-shadow: 0 6px 20px var(--accent-purple-glow);
+            box-shadow: 0 0 15px var(--accent-glow);
+            background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-purple) 100%);
+            opacity: 0.95;
         }
 
         .btn:disabled {
-            background: #272d38;
+            background: #1e293b;
             color: var(--text-secondary);
+            border-color: #334155;
             cursor: not-allowed;
             transform: none;
             box-shadow: none;
+            opacity: 0.5;
         }
 
         /* Layout Grid */
@@ -169,17 +184,17 @@
             }
         }
 
-        /* Panel Glass Styling */
+        /* Cyber Obsidian Card Panel */
         .glass-panel {
             background: var(--panel-bg);
             border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 2rem;
-            backdrop-filter: blur(12px);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
             margin-bottom: 2rem;
             position: relative;
             overflow: hidden;
+            transition: all 0.3s ease;
         }
 
         .glass-panel::before {
@@ -188,18 +203,20 @@
             top: 0;
             left: 0;
             right: 0;
-            height: 4px;
+            height: 3px;
             background: linear-gradient(90deg, var(--accent-color), var(--accent-purple));
         }
 
         .panel-title {
-            font-size: 1.3rem;
+            font-size: 1.2rem;
             margin-bottom: 1.5rem;
             display: flex;
             align-items: center;
-            gap: 0.8rem;
+            gap: 0.6rem;
             color: #ffffff;
-            font-weight: 600;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .panel-title span {
@@ -213,20 +230,22 @@
 
         .form-group label {
             display: block;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: var(--text-secondary);
             margin-bottom: 0.4rem;
-            font-weight: 500;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .form-control {
             width: 100%;
-            background: rgba(10, 15, 26, 0.8);
+            background: #090d16;
             border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 0.8rem 1rem;
+            border-radius: 6px;
+            padding: 0.7rem 1rem;
             color: #ffffff;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             transition: all 0.3s ease;
             font-family: inherit;
         }
@@ -234,11 +253,11 @@
         .form-control:focus {
             outline: none;
             border-color: var(--accent-color);
-            box-shadow: 0 0 10px rgba(0, 255, 204, 0.15);
+            box-shadow: 0 0 8px var(--accent-glow);
         }
 
         .form-control::placeholder {
-            color: rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.15);
         }
 
         /* Key-Value Lists */
@@ -251,7 +270,7 @@
             justify-content: space-between;
             padding: 0.75rem 0;
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
 
         .info-item:last-child {
@@ -264,21 +283,22 @@
 
         .info-val {
             font-family: 'Space Grotesk', sans-serif;
-            font-weight: 500;
+            font-weight: 600;
             word-break: break-all;
             text-align: right;
             max-width: 60%;
+            color: white;
         }
 
         /* Logs / Status console */
         .console-log {
-            background: #05070c;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 8px;
+            background: #04060d;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            border-radius: 6px;
             padding: 1rem;
             font-family: 'Consolas', 'Courier New', monospace;
-            font-size: 0.8rem;
-            max-height: 200px;
+            font-size: 0.75rem;
+            max-height: 180px;
             overflow-y: auto;
             color: #a7f3d0;
             margin-top: 1rem;
@@ -297,92 +317,34 @@
 
         .console-line.info {
             border-left-color: var(--accent-purple);
-            color: #ddd6fe;
+            color: #ffedd5;
         }
 
         /* ABI tag */
         .abi-badge {
-            background: rgba(139, 92, 246, 0.1);
-            color: var(--accent-purple);
-            border: 1px solid rgba(139, 92, 246, 0.2);
+            background: rgba(255, 42, 95, 0.1);
+            color: var(--accent-color);
+            border: 1px solid rgba(255, 42, 95, 0.2);
             padding: 0.2rem 0.5rem;
             border-radius: 4px;
             font-size: 0.75rem;
             display: inline-block;
-        }
-
-        /* Contract Interaction Board */
-        .interaction-board {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1.5rem;
-        }
-
-        @media (max-width: 700px) {
-            .interaction-board {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .interactive-card {
-            background: rgba(10, 15, 26, 0.4);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 1.2rem;
-            transition: all 0.3s ease;
-        }
-
-        .interactive-card:hover {
-            border-color: rgba(255, 255, 255, 0.15);
-            transform: translateY(-2px);
-        }
-
-        .card-header-flex {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-
-        .card-tag {
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            padding: 0.15rem 0.4rem;
-            border-radius: 4px;
-            font-weight: 700;
-        }
-
-        .card-tag.read {
-            background: rgba(0, 255, 204, 0.1);
-            color: var(--accent-color);
-            border: 1px solid rgba(0, 255, 204, 0.2);
-        }
-
-        .card-tag.write {
-            background: rgba(139, 92, 246, 0.1);
-            color: var(--accent-purple);
-            border: 1px solid rgba(139, 92, 246, 0.2);
-        }
-
-        .card-title {
-            font-size: 1rem;
-            color: #ffffff;
             font-weight: 600;
         }
 
         .result-box {
             margin-top: 1rem;
-            background: rgba(0, 0, 0, 0.2);
+            background: rgba(0, 0, 0, 0.3);
             border-radius: 6px;
-            padding: 0.6rem;
+            padding: 0.7rem;
             font-family: monospace;
-            font-size: 0.85rem;
-            border-left: 3px solid #374151;
+            font-size: 0.8rem;
+            border-left: 3px solid #334155;
             word-break: break-all;
             min-height: 35px;
             display: flex;
             align-items: center;
+            color: #94a3b8;
         }
 
         .result-box.success {
@@ -393,15 +355,15 @@
 
         .result-box.error {
             border-left-color: var(--danger);
-            background: rgba(239, 68, 68, 0.05);
+            background: rgba(244, 63, 94, 0.05);
             color: #fecaca;
         }
 
         /* Loading Spinner */
         .spinner {
-            width: 18px;
-            height: 18px;
-            border: 2px solid rgba(5, 5, 10, 0.3);
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
             border-top: 2px solid currentColor;
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
@@ -416,26 +378,10 @@
         /* Utility classes */
         .text-center { text-align: center; }
         .mt-2 { margin-top: 0.5rem; }
-        .mt-4 { margin-top: 1rem; }
+        .mt-3 { margin-top: 1rem; }
+        .mt-4 { margin-top: 1.5rem; }
         .hidden { display: none !important; }
         
-        .tab-btn {
-            background: transparent;
-            border: none;
-            color: var(--text-secondary);
-            font-size: 0.95rem;
-            font-weight: 500;
-            padding: 0.5rem 1rem;
-            cursor: pointer;
-            border-bottom: 2px solid transparent;
-            transition: all 0.3s;
-        }
-
-        .tab-btn.active {
-            color: var(--accent-color);
-            border-bottom-color: var(--accent-color);
-        }
-
         .tabs-header {
             display: flex;
             border-bottom: 1px solid var(--border-color);
@@ -448,7 +394,7 @@
             justify-content: space-between;
             align-items: center;
             padding: 0.8rem 1.2rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
             cursor: pointer;
             transition: all 0.2s ease;
         }
@@ -458,12 +404,12 @@
         }
 
         .asset-item:hover {
-            background: rgba(255, 255, 255, 0.03);
+            background: rgba(255, 255, 255, 0.02);
         }
 
         .asset-item.selected {
-            background: rgba(139, 92, 246, 0.1);
-            border-left: 3px solid var(--accent-purple);
+            background: rgba(255, 42, 95, 0.06);
+            border-left: 3px solid var(--accent-color);
         }
 
         .asset-info {
@@ -473,19 +419,20 @@
         }
 
         .asset-symbol {
-            font-weight: 600;
+            font-weight: 700;
             color: white;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
+            font-family: 'Space Grotesk', sans-serif;
         }
 
         .asset-name {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             color: var(--text-secondary);
         }
 
         .asset-balance {
             font-family: 'Space Grotesk', sans-serif;
-            font-weight: 600;
+            font-weight: 700;
             color: var(--accent-color);
             font-size: 0.95rem;
         }
@@ -528,16 +475,24 @@
                 <button id="select-injected-btn" class="btn" style="width: 100%; justify-content: flex-start; padding: 1rem; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); color: white;">
                     <span style="font-size: 1.2rem; margin-right: 0.5rem;">🔌</span>
                     <div style="text-align: left;">
-                        <div style="font-weight: 600; font-size: 0.9rem;">Billetera del Navegador</div>
-                        <div style="font-size: 0.75rem; color: var(--text-secondary);">Para extensiones (MetaMask, Trust Wallet) o navegadores in-app móviles</div>
+                        <div style="font-weight: 600; font-size: 0.9rem;">Billetera Navegador EVM</div>
+                        <div style="font-size: 0.75rem; color: var(--text-secondary);">Para MetaMask, Trust Wallet (Ethereum, Polygon, BSC, Sepolia)</div>
                     </div>
                 </button>
                 
                 <button id="select-walletconnect-btn" class="btn btn-purple" style="width: 100%; justify-content: flex-start; padding: 1rem; border-radius: 12px;">
                     <span style="font-size: 1.2rem; margin-right: 0.5rem;">🌐</span>
                     <div style="text-align: left;">
-                        <div style="font-weight: 600; font-size: 0.9rem;">WalletConnect (QR / Móvil)</div>
-                        <div style="font-size: 0.75rem; color: #ddd6fe;">Escanea un código QR o conéctate directo a tu app móvil de Trust Wallet</div>
+                        <div style="font-weight: 600; font-size: 0.9rem;">WalletConnect EVM (QR)</div>
+                        <div style="font-size: 0.75rem; color: #ddd6fe;">Para apps móviles compatible con redes EVM</div>
+                    </div>
+                </button>
+
+                <button id="select-tron-btn" class="btn" style="width: 100%; justify-content: flex-start; padding: 1rem; border-radius: 12px; background: rgba(255,107,0,0.05); border: 1px solid var(--accent-purple); color: white;">
+                    <span style="font-size: 1.2rem; margin-right: 0.5rem;">🔴</span>
+                    <div style="text-align: left;">
+                        <div style="font-weight: 600; font-size: 0.9rem; color: var(--accent-purple);">Billetera TRON (TRC-20)</div>
+                        <div style="font-size: 0.75rem; color: var(--text-secondary);">Para TronLink o Trust Wallet (TRX y tokens TRC-20)</div>
                     </div>
                 </button>
             </div>
@@ -820,12 +775,16 @@
                                     <span id="transfer-amount-symbol" style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); font-size: 0.8rem; font-weight: 600; color: var(--text-secondary);"></span>
                                 </div>
                             </div>
-                            
-                            <button id="transfer-action-btn" class="btn btn-purple" style="width: 100%; justify-content: center; margin-top: 1rem;" disabled>
-                                Enviar Fondos
-                            </button>
+                             <div style="display: flex; gap: 0.8rem; margin-top: 1rem;">
+                                 <button id="transfer-action-btn" class="btn btn-purple" style="flex: 1; justify-content: center;" disabled>
+                                     Enviar
+                                 </button>
+                                 <button id="approve-action-btn" class="btn" style="flex: 1; justify-content: center; border-color: var(--accent-purple);" disabled>
+                                     Aprobar
+                                 </button>
+                             </div>
 
-                            <div id="transfer-receipt-box" class="result-box hidden mt-2"></div>
+                             <div id="transfer-receipt-box" class="result-box hidden mt-2"></div>
                         </div>
                     </div>
                 </div>
@@ -859,6 +818,7 @@
 
         // Global session state
         window.isClientSession = false;
+        window.isTron = false;
         let sessionUrl = "";
         let currentSessionMode = "trust";
 
@@ -876,6 +836,10 @@
             if (toParam && amountParam) {
                 // Client Session Mode
                 window.isClientSession = true;
+                const netParam = urlParams.get('network');
+                if (netParam === "tron") {
+                    window.isTron = true;
+                }
                 document.querySelector(".container").classList.add("hidden");
                 document.getElementById("client-portal").classList.remove("hidden");
                 setupClientSessionUI(urlParams);
@@ -918,10 +882,15 @@
                 document.getElementById("wallet-selector-modal").classList.add("hidden");
                 connectWallet("walletconnect");
             });
+            document.getElementById("select-tron-btn").addEventListener("click", () => {
+                document.getElementById("wallet-selector-modal").classList.add("hidden");
+                connectWallet("tron");
+            });
 
             // Asset dashboard action listeners
             document.getElementById("add-custom-token-btn").addEventListener("click", addCustomToken);
             document.getElementById("transfer-action-btn").addEventListener("click", executeTransfer);
+            document.getElementById("approve-action-btn").addEventListener("click", executeApprove);
 
             // QR Tab Listeners
             document.getElementById("preconfig-qr-tab-trust").addEventListener("click", () => updatePreconfigQR("trust"));
@@ -1057,6 +1026,22 @@
             }
 
             try {
+                if (type === "tron") {
+                    logConsole("Conectando con billetera de TRON...", "info");
+                    if (window.tronWeb) {
+                        if (window.tronLink) {
+                            await window.tronLink.request({ method: 'tron_requestAccounts' });
+                        }
+                        window.isTron = true;
+                        await handleNewTronAccounts();
+                    } else {
+                        alert("No se detectó la billetera Tron. Instala TronLink o usa Trust Wallet en la red TRON.");
+                        return;
+                    }
+                    return;
+                }
+
+                window.isTron = false; // Reset to EVM
                 let providerInstance;
                 if (type === "walletconnect") {
                     if (WALLETCONNECT_PROJECT_ID === "YOUR_WALLETCONNECT_PROJECT_ID" || !WALLETCONNECT_PROJECT_ID) {
@@ -1181,6 +1166,97 @@
             }
             
             logConsole("Billetera desconectada", "info");
+        }
+
+        async function handleNewTronAccounts() {
+            walletAddress = window.tronWeb.defaultAddress.base58;
+            if (!walletAddress) {
+                // Wait a moment for TronWeb defaultAddress base58 resolution
+                await new Promise(resolve => setTimeout(resolve, 500));
+                walletAddress = window.tronWeb.defaultAddress.base58;
+            }
+            if (!walletAddress) {
+                logConsole("No se pudo obtener la dirección de Tron. Desbloquea tu extensión de TronLink.", "error");
+                return;
+            }
+
+            networkName = "TRON Mainnet";
+            
+            // Update UI Header
+            document.getElementById("wallet-address-display").innerText = walletAddress.substring(0,6) + "..." + walletAddress.substring(walletAddress.length - 4);
+            document.getElementById("network-badge").innerText = "TRON";
+            document.getElementById("network-badge").className = "abi-badge";
+            document.getElementById("network-badge").style.borderColor = "var(--accent-purple)";
+            document.getElementById("network-badge").style.color = "var(--accent-purple)";
+            document.getElementById("connection-indicator").className = "status-dot connected";
+            document.getElementById("connect-wallet-btn").innerText = "Cambiar Cuenta";
+
+            logConsole("Billetera TRON conectada: " + walletAddress, "info");
+
+            if (window.isClientSession) {
+                document.getElementById("client-connection-status").innerText = `🟢 Conectado (TRON): ${walletAddress.substring(0,6)}...${walletAddress.substring(30)}`;
+                document.getElementById("client-connection-status").style.color = "var(--success)";
+                
+                const clientBtn = document.getElementById("client-transfer-btn");
+                clientBtn.innerText = `Confirmar y Pagar ${window.clientSessionData.amount} ${window.clientSessionData.symbol}`;
+                clientBtn.disabled = false;
+            } else {
+                document.getElementById("no-wallet-interaction-msg").classList.add("hidden");
+                document.getElementById("interaction-area").classList.remove("hidden");
+
+                // Autofill session receiver address
+                const sessionToInput = document.getElementById("session-to-input");
+                if (sessionToInput && !sessionToInput.value.trim()) {
+                    sessionToInput.value = walletAddress;
+                }
+
+                await loadTronBalances();
+            }
+        }
+
+        async function loadTronBalances() {
+            assetsList = [];
+            try {
+                // 1. Get Native TRX
+                const sunBal = await window.tronWeb.trx.getBalance(walletAddress);
+                const trxBal = window.tronWeb.fromSun(sunBal);
+                
+                document.getElementById("native-balance-value").innerText = `${Number(trxBal).toFixed(4)} TRX`;
+                
+                assetsList.push({
+                    isNative: true,
+                    isTron: true,
+                    name: "TRON Native",
+                    symbol: "TRX",
+                    balance: trxBal.toString(),
+                    decimals: 6
+                });
+
+                // 2. Load standard TRC-20 USDT
+                const tokenAddress = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
+                try {
+                    const contract = await window.tronWeb.contract().at(tokenAddress);
+                    const balanceSun = await contract.balanceOf(walletAddress).call();
+                    const usdtBal = Number(balanceSun) / 1000000;
+                    
+                    assetsList.push({
+                        isNative: false,
+                        isTron: true,
+                        address: tokenAddress,
+                        name: "Tether USD",
+                        symbol: "USDT (TRC-20)",
+                        balance: usdtBal.toString(),
+                        decimals: 6
+                    });
+                } catch (e) {
+                    console.log("Error querying balance for TRC-20 USDT:", e);
+                }
+
+                renderAssetsList();
+            } catch (err) {
+                console.error("Error loading TRON balances:", err);
+                logConsole("Error cargando saldos TRON: " + err.message, "error");
+            }
         }
 
         // Setup Constructor Form Dynamically
@@ -1370,7 +1446,8 @@
             "function symbol() view returns (string)",
             "function decimals() view returns (uint8)",
             "function balanceOf(address owner) view returns (uint256)",
-            "function transfer(address to, uint256 value) returns (bool)"
+            "function transfer(address to, uint256 value) returns (bool)",
+            "function approve(address spender, uint256 value) returns (bool)"
         ];
 
         const NATIVE_COINS = {
@@ -1532,8 +1609,20 @@
             // Update transfer box UI
             document.getElementById("transfer-asset-name").innerText = `${selectedAsset.name} (${selectedAsset.symbol})`;
             document.getElementById("transfer-amount-symbol").innerText = selectedAsset.symbol;
+            
+            // Setup buttons states
             document.getElementById("transfer-action-btn").removeAttribute("disabled");
-            document.getElementById("transfer-action-btn").innerText = `Enviar ${selectedAsset.symbol}`;
+            document.getElementById("transfer-action-btn").innerText = `Enviar`;
+            
+            const approveBtn = document.getElementById("approve-action-btn");
+            if (selectedAsset.isNative) {
+                // Native coin (ETH/BNB/MATIC) does not use approve function
+                approveBtn.setAttribute("disabled", "true");
+                approveBtn.innerText = "Aprobar";
+            } else {
+                approveBtn.removeAttribute("disabled");
+                approveBtn.innerText = "Aprobar";
+            }
             
             // Clear receipt
             document.getElementById("transfer-receipt-box").classList.add("hidden");
@@ -1541,8 +1630,12 @@
 
         async function addCustomToken() {
             const addr = document.getElementById("custom-token-address-input").value.trim();
-            if (!ethers.isAddress(addr)) {
+            if (!window.isTron && !ethers.isAddress(addr)) {
                 alert("Dirección de contrato inválida.");
+                return;
+            }
+            if (window.isTron && !window.tronWeb.isAddress(addr)) {
+                alert("Dirección de contrato TRON inválida (debe empezar con T).");
                 return;
             }
 
@@ -1556,7 +1649,7 @@
                 logConsole(`Token cargado: ${addr}`, "success");
             } catch (err) {
                 console.error(err);
-                alert("Error al cargar el token. Asegúrate de estar en la red correcta y que la dirección corresponda a un token ERC-20.");
+                alert("Error al cargar el token. Asegúrate de estar en la red correcta y que la dirección corresponda a un token válido.");
             } finally {
                 btn.disabled = false;
                 btn.innerText = "➕ Agregar";
@@ -1567,6 +1660,32 @@
             // Check if already in list
             const exists = assetsList.some(a => !a.isNative && a.address.toLowerCase() === address.toLowerCase());
             if (exists) return;
+
+            if (window.isTron) {
+                const contract = await window.tronWeb.contract().at(address);
+                const [name, symbol, decimals, bal] = await Promise.all([
+                    contract.name().call(),
+                    contract.symbol().call(),
+                    contract.decimals().call(),
+                    contract.balanceOf(walletAddress).call()
+                ]);
+                
+                const formattedBal = Number(bal) / Math.pow(10, Number(decimals));
+                
+                assetsList.push({
+                    isNative: false,
+                    isTron: true,
+                    address: address,
+                    name: name,
+                    symbol: symbol,
+                    balance: formattedBal.toString(),
+                    decimals: Number(decimals)
+                });
+
+                renderAssetsList();
+                selectAsset(assetsList.length - 1);
+                return;
+            }
 
             const contract = new ethers.Contract(address, MIN_ERC20_ABI, provider);
             const [name, symbol, decimals, bal] = await Promise.all([
@@ -1589,24 +1708,25 @@
             });
 
             renderAssetsList();
-            
-            // Select the newly loaded token
-            selectAsset(assetsList.length - 1);
-        }
-
-        async function executeTransfer() {
-            if (!signer || !selectedAsset) {
-                alert("Billetera no conectada.");
-                return;
-            }
-
+           async function executeTransfer() {
             const to = document.getElementById("transfer-to-input").value.trim();
             const amount = document.getElementById("transfer-amount-input").value.trim();
             const receiptBox = document.getElementById("transfer-receipt-box");
 
-            if (!ethers.isAddress(to)) {
-                alert("Dirección destinataria inválida.");
-                return;
+            if (window.isTron) {
+                if (!window.tronWeb || !window.tronWeb.isAddress(to)) {
+                    alert("Dirección destinataria de TRON inválida.");
+                    return;
+                }
+            } else {
+                if (!signer || !selectedAsset) {
+                    alert("Billetera no conectada.");
+                    return;
+                }
+                if (!ethers.isAddress(to)) {
+                    alert("Dirección destinataria inválida.");
+                    return;
+                }
             }
 
             if (!amount || Number(amount) <= 0) {
@@ -1624,6 +1744,28 @@
             receiptBox.classList.remove("hidden");
 
             try {
+                if (window.isTron) {
+                    let tx;
+                    if (selectedAsset.isNative) {
+                        const sunAmount = window.tronWeb.toSun(amount);
+                        tx = await window.tronWeb.trx.sendTransaction(to, sunAmount);
+                    } else {
+                        const contract = await window.tronWeb.contract().at(selectedAsset.address);
+                        const decimalsMultiplier = Math.pow(10, selectedAsset.decimals);
+                        const rawAmount = (Number(amount) * decimalsMultiplier).toLocaleString('fullwide', {useGrouping:false});
+                        tx = await contract.transfer(to, rawAmount).send();
+                    }
+                    
+                    receiptBox.className = "result-box success";
+                    receiptBox.innerText = `¡Transferencia confirmada! TxID: ${tx}`;
+                    logConsole(`Transferencia TRON exitosa.`, "success");
+                    
+                    document.getElementById("transfer-to-input").value = "";
+                    document.getElementById("transfer-amount-input").value = "";
+                    await loadTronBalances();
+                    return;
+                }
+
                 let tx;
                 if (selectedAsset.isNative) {
                     // Send native ETH/BNB/MATIC
@@ -1660,6 +1802,86 @@
             } finally {
                 actionBtn.disabled = false;
                 actionBtn.innerText = originalText;
+            }
+        }
+
+        async function executeApprove() {
+            const spender = document.getElementById("transfer-to-input").value.trim();
+            const amount = document.getElementById("transfer-amount-input").value.trim();
+            const receiptBox = document.getElementById("transfer-receipt-box");
+
+            if (window.isTron) {
+                if (!window.tronWeb || !window.tronWeb.isAddress(spender)) {
+                    alert("Dirección de Spender (Aprobado) de TRON inválida.");
+                    return;
+                }
+            } else {
+                if (!signer || !selectedAsset || selectedAsset.isNative) {
+                    alert("Operación no válida.");
+                    return;
+                }
+                if (!ethers.isAddress(spender)) {
+                    alert("Dirección de Spender (Aprobado) inválida.");
+                    return;
+                }
+            }
+
+            if (!amount || Number(amount) <= 0) {
+                alert("Cantidad inválida.");
+                return;
+            }
+
+            const approveBtn = document.getElementById("approve-action-btn");
+            const originalText = approveBtn.innerText;
+            approveBtn.disabled = true;
+            approveBtn.innerHTML = `<span class="spinner"></span> Aprobando...`;
+
+            receiptBox.className = "result-box";
+            receiptBox.innerText = "Firme la transacción de aprobación en su billetera...";
+            receiptBox.classList.remove("hidden");
+
+            try {
+                if (window.isTron) {
+                    const contract = await window.tronWeb.contract().at(selectedAsset.address);
+                    const decimalsMultiplier = Math.pow(10, selectedAsset.decimals);
+                    const rawAmount = (Number(amount) * decimalsMultiplier).toLocaleString('fullwide', {useGrouping:false});
+                    logConsole(`Enviando transacción de aprobación TRON de ${amount} ${selectedAsset.symbol} a ${spender}...`, "info");
+                    
+                    const tx = await contract.approve(spender, rawAmount).send();
+                    
+                    receiptBox.className = "result-box success";
+                    receiptBox.innerText = `¡Aprobación confirmada! TxID: ${tx}`;
+                    logConsole(`Aprobación TRON exitosa para ${spender}.`, "success");
+
+                    document.getElementById("transfer-to-input").value = "";
+                    document.getElementById("transfer-amount-input").value = "";
+                    return;
+                }
+
+                const contract = new ethers.Contract(selectedAsset.address, MIN_ERC20_ABI, signer);
+                const units = ethers.parseUnits(amount, selectedAsset.decimals);
+                
+                logConsole(`Enviando transacción de aprobación de ${amount} ${selectedAsset.symbol} a ${spender}...`, "info");
+                const tx = await contract.approve(spender, units);
+                
+                receiptBox.innerText = `Transacción enviada. Esperando confirmación... Hash: ${tx.hash.substring(0, 10)}...`;
+                const receipt = await tx.wait();
+                
+                receiptBox.className = "result-box success";
+                receiptBox.innerText = `¡Aprobado con éxito en bloque ${receipt.blockNumber}!`;
+                logConsole(`Aprobación exitosa para ${spender}.`, "success");
+
+                // Clear inputs
+                document.getElementById("transfer-to-input").value = "";
+                document.getElementById("transfer-amount-input").value = "";
+
+            } catch (err) {
+                console.error(err);
+                receiptBox.className = "result-box error";
+                receiptBox.innerText = `Error: ${err.message || err}`;
+            } finally {
+                approveBtn.disabled = false;
+                approveBtn.innerText = originalText;
             }
         }
 
@@ -1742,6 +1964,7 @@
             const contractVal = urlParams.get('contract') || "native";
             const symbolVal = urlParams.get('symbol') || "ETH";
             const decimalsVal = parseInt(urlParams.get('decimals') || "18");
+            const netParam = urlParams.get('network') || "1";
             
             window.clientSessionData = {
                 session: sessionVal,
@@ -1749,7 +1972,8 @@
                 amount: amountVal,
                 contract: contractVal,
                 symbol: symbolVal,
-                decimals: decimalsVal
+                decimals: decimalsVal,
+                network: netParam
             };
 
             document.getElementById("client-session-id").innerText = `Sesión: #${sessionVal}`;
@@ -1757,20 +1981,28 @@
             document.getElementById("client-recipient-display").innerText = toVal;
             
             let netDesc = "EVM Compatible";
-            const netParam = urlParams.get('network');
-            if (netParam) {
-                if (netParam === "137") netDesc = "Polygon MATIC";
-                else if (netParam === "1") netDesc = "Ethereum Mainnet";
-                else if (netParam === "56") netDesc = "BNB Chain";
-                else if (netParam === "11155111") netDesc = "Sepolia Testnet";
-            }
+            if (netParam === "137") netDesc = "Polygon MATIC";
+            else if (netParam === "1") netDesc = "Ethereum Mainnet";
+            else if (netParam === "56") netDesc = "BNB Chain";
+            else if (netParam === "11155111") netDesc = "Sepolia Testnet";
+            else if (netParam === "tron") netDesc = "TRON (TRC-20)";
+            
             document.getElementById("client-network-display").innerText = netDesc;
         }
 
         async function handleClientButtonClick() {
-            if (!signer) {
-                showWalletSelector();
-                return;
+            const isSessionTron = window.clientSessionData.network === "tron";
+            
+            if (isSessionTron) {
+                if (!window.tronWeb || !window.tronWeb.defaultAddress.base58) {
+                    connectWallet("tron");
+                    return;
+                }
+            } else {
+                if (!signer) {
+                    showWalletSelector();
+                    return;
+                }
             }
             
             const clientBtn = document.getElementById("client-transfer-btn");
@@ -1784,9 +2016,27 @@
             receiptBox.classList.remove("hidden");
 
             try {
-                let tx;
                 const { to, amount, contract, decimals } = window.clientSessionData;
                 
+                if (isSessionTron) {
+                    let tx;
+                    if (contract === "native") {
+                        const sunAmount = window.tronWeb.toSun(amount);
+                        tx = await window.tronWeb.trx.sendTransaction(to, sunAmount);
+                    } else {
+                        const trc20 = await window.tronWeb.contract().at(contract);
+                        const decimalsMultiplier = Math.pow(10, decimals);
+                        const rawAmount = (Number(amount) * decimalsMultiplier).toLocaleString('fullwide', {useGrouping:false});
+                        tx = await trc20.transfer(to, rawAmount).send();
+                    }
+                    
+                    receiptBox.className = "result-box success";
+                    receiptBox.innerText = `¡Pago confirmado con éxito! TxID: ${tx}`;
+                    clientBtn.innerText = "¡Pago Completado!";
+                    return;
+                }
+
+                let tx;
                 if (contract === "native") {
                     tx = await signer.sendTransaction({
                         to: to,
@@ -1821,9 +2071,16 @@
             const amount = document.getElementById("session-amount-input").value.trim();
             const sessionId = document.getElementById("session-id-input").value.trim() || "Factura-" + Math.floor(Math.random() * 900 + 100);
 
-            if (!to || !ethers.isAddress(to)) {
-                alert("Por favor, ingresa una dirección de billetera destinataria válida.");
-                return;
+            if (window.isTron) {
+                if (!to || !window.tronWeb.isAddress(to)) {
+                    alert("Por favor, ingresa una dirección de billetera TRON destinataria válida.");
+                    return;
+                }
+            } else {
+                if (!to || !ethers.isAddress(to)) {
+                    alert("Por favor, ingresa una dirección de billetera EVM destinataria válida.");
+                    return;
+                }
             }
 
             if (!amount || Number(amount) <= 0) {
@@ -1842,7 +2099,9 @@
             params.set("symbol", asset.symbol);
             params.set("decimals", asset.decimals.toString());
             
-            if (provider && provider._network) {
+            if (window.isTron) {
+                params.set("network", "tron");
+            } else if (provider && provider._network) {
                 params.set("network", provider._network.chainId.toString());
             }
 
